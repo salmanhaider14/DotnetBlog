@@ -1,0 +1,95 @@
+﻿@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@implements IDisposable
+@inject SignInManager<ApplicationUser> _signInManager
+@inject HttpClient _http
+@using System.Text.Json
+@inject IJSRuntime JSRuntime
+@inject IHttpClientFactory _httpClientFactory;
+
+
+<nav class="flex justify-between items-center p-2 px-3 ">
+    <!-- Left Side: Site title and nav links -->
+    <div class="flex items-center space-x-6">
+        
+            
+            <a class="text-lg md:text-xl font-bold ml-3" href="/">My Blog</a>
+        
+
+        <!-- Links Group (Hidden on small screens) -->
+        
+    </div>
+    <div class="hidden md:flex md:items-center space-x-2 font-semibold">
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Class="p-1 leading-none whitespace-nowrap font-semibold">Home</MudNavLink>
+        <MudNavLink Href="posts" Match="NavLinkMatch.Prefix" Class="whitespace-nowrap font-semibold">Blogs</MudNavLink>
+        <MudNavLink Href="authors" Match="NavLinkMatch.Prefix" Class="whitespace-nowrap font-semibold">Authors</MudNavLink>
+        <MudNavLink Href="categories" Match="NavLinkMatch.Prefix" Class="whitespace-nowrap font-semibold">Categories</MudNavLink>
+    </div>
+    <!-- Right Side: Search, Auth, Profile -->
+    <div class="hidden md:flex items-center space-x-4">
+       
+
+        <AuthorizeView>
+            <Authorized>
+                <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Direction="Direction.Bottom" OffsetY="true">
+                    <MudMenuItem Href="Account/Manage">@context.User.Identity?.Name</MudMenuItem>
+                        <MudMenuItem OnClick="@LogoutAsync">Logout</MudMenuItem>
+                    </MudMenu>
+                </Authorized>
+                <NotAuthorized>
+                    <MudButton Href="Account/Register" Variant="Variant.Text" Color="Color.Inherit">Register</MudButton>
+                    <MudButton Href="Account/Login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+        <div class="block md:hidden">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="@(() => OpenDrawer(Anchor.Start))" />
+        </div>
+    </nav>
+    <MudDrawer @bind-Open="@_open" Anchor="@_anchor" Elevation="1" Variant="@DrawerVariant.Temporary" OverlayAutoClose="@_overlayAutoClose" Width="300px" Height="100%" Class="h-screen">
+        <MudNavMenu Color="Color.Primary" Bordered="true">
+        <div class="flex flex-col gap-[10px] mt-[20px]">
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+            <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
+            <MudNavLink Href="weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Cloud">Weather</MudNavLink>
+            <MudNavLink Href="auth" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Lock">Auth Required</MudNavLink>
+        </div>
+        </MudNavMenu>
+    </MudDrawer>
+
+  
+    @code {
+    private bool _open;
+    private Anchor _anchor;
+    private bool _overlayAutoClose = true;
+    private string? _currentUrl;
+
+    protected override void OnInitialized()
+    {
+        _currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OpenDrawer(Anchor anchor)
+    {
+        _open = true;
+        _anchor = anchor;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    private async Task LogoutAsync()
+    {
+        NavigationManager.NavigateTo("/Account/Logout", forceLoad: true);
+    }
+
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

@@ -1,0 +1,96 @@
+﻿@page "/post/{Id}"
+@rendermode InteractiveServer
+@inject PostService _postService
+@inject AuthenticationStateProvider _authStateProvider
+@inject UserManager<ApplicationUser> _userManager
+@inject NavigationManager _nav
+
+
+<PageTitle>@pageTitle</PageTitle>
+
+
+<div class="min-h-screen flex justify-center items-start "> <!-- Main Flex Container for Centering -->
+    @if(post is null)
+    {
+        <h1 class="text-2xl font-bold">Loading....</h1>
+    }
+    else
+    {
+        <!-- Vertical Blog Container -->
+        <div class="w-full max-w-[800px] p-6 bg-white shadow-md rounded-lg border-2 mt-12"> <!-- Adjust Width and Add Spacing -->
+            
+            <!-- Category Chip -->
+            <MudChip T="string" Color="Color.Primary" Class="w-max mb-4" OnClick="()=>HandleCategory(post.CategoryId)">@post.Category.Name</MudChip>
+            
+            <!-- Title -->
+            <h1 class="text-3xl font-bold mb-6">@post.Title</h1>
+        
+            <!-- Post Metadata (e.g., author and date) -->
+            <div class="flex justify-between">
+            <div class="flex items-center text-gray-500 gap-8 mb-4">
+                <div class="flex cursor-pointer items-center gap-2" @onclick="() => HandleAuthor(post.AuthorId)">
+                    <MudAvatar Size="Size.Small" Color="Color.Secondary">U</MudAvatar>
+                    <p>Istra Croatia</p>
+                </div>
+                
+                <p>@post.CreatedAt.ToLongDateString()</p>
+            </div>
+            
+                <AuthorizeView Roles="Author,Admin">
+                    @if(userId == post.AuthorId)
+                    {
+                        <div class="flex items-center gap-1">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" aria-label="edit" OnClick="() => HandleEdit(post.Id)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="delete" />
+                        </div>
+                    }
+                    
+                </AuthorizeView>
+               
+            </div>
+
+            <Blog.Components.Layout.Carousel />
+
+            
+            <div class="ql-editor"> 
+                @((MarkupString)post.Content)
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private Post post;
+    private string pageTitle = "Blog";
+    private string userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        post = await _postService.GetPostByIdAsync(int.Parse(Id));
+        var auth = await _authStateProvider.GetAuthenticationStateAsync();
+        var user =await _userManager.GetUserAsync(auth.User);
+
+        if(user is not null)
+        {
+            userId = user.Id;
+        }
+        if(post is not null)
+        {
+            pageTitle = post.Title;
+        }
+    }
+    private void HandleEdit(int postId)
+    {
+        _nav.NavigateTo($"/update-post/{postId}");
+    }
+    private void HandleAuthor(string Id)
+    {
+        _nav.NavigateTo($"/author/{Id}");
+    }
+    private void HandleCategory(int Id)
+    {
+        _nav.NavigateTo($"/category/{Id}");
+    }
+}

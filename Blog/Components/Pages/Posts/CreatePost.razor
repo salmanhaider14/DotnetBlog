@@ -1,0 +1,137 @@
+﻿@page "/create-post"
+@rendermode InteractiveServer
+@inject PostService _postService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+@attribute [Authorize(Roles ="Author,Admin")]
+@inject AuthenticationStateProvider _authStateProvider
+@inject UserManager<ApplicationUser> _userManager
+
+
+<MudContainer Class="mt-16">
+    <MudText Typo="Typo.h3" Class="mb-8">Create New Post</MudText>
+
+    <EditForm Model="@post" OnValidSubmit="@HandleValidSubmit" FormName="CreatePostForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="mb-4">
+               
+                <MudTextField @bind-Value="post.Title" Label="Title" Variant="Variant.Outlined" />
+                <ValidationMessage For="@(() => post.Title)" />
+            </div>
+            @if (EditorEnabled)
+            {
+                <div id="toolbar">
+                    <span class="ql-formats">
+                        <select class="ql-font">
+                            <option selected=""></option>
+                            <option value="serif"></option>
+                            <option value="monospace"></option>
+                        </select>
+                        <select class="ql-size">
+                            <option value="small"></option>
+                            <option selected=""></option>
+                            <option value="large"></option>
+                            <option value="huge"></option>
+                        </select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-bold"></button>
+                        <button class="ql-italic"></button>
+                        <button class="ql-underline"></button>
+                        <button class="ql-strike"></button>
+                    </span>
+                    <span class="ql-formats">
+                        <select class="ql-color"></select>
+                        <select class="ql-background"></select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-list" value="ordered"></button>
+                        <button class="ql-list" value="bullet"></button>
+                        <button class="ql-indent" value="-1"></button>
+                        <button class="ql-indent" value="+1"></button>
+                        <select class="ql-align">
+                            <option selected=""></option>
+                            <option value="center"></option>
+                            <option value="right"></option>
+                            <option value="justify"></option>
+                        </select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-link"></button>
+                    </span>
+                </div>
+            }
+            <div @ref="@divEditorElement" />
+
+            <div class="mb-4">
+                <MudTextField @bind-Value="post.ImageUrl" Label="Image URL" Variant="Variant.Outlined"/>
+                <ValidationMessage For="@(() => post.ImageUrl)" />
+            </div>
+
+            <div class="mb-4">
+                <MudSelect @bind-Value="post.CategoryId"
+                           Variant="Variant.Outlined"
+                           Label="Select Category"
+                           Placeholder="Select Category"
+                           Required
+                           >
+                    @foreach (var category in categories)
+                    {
+                        <MudSelectItem Value="category.Id">@category.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <ValidationMessage For="@(() => post.CategoryId)" />
+            </div>
+
+            <div class="flex items-center justify-between">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Create Post</MudButton>
+            </div>
+        </div>
+    </EditForm>
+</MudContainer>
+
+@code {
+
+
+    private CreatePostVM post = new CreatePostVM();
+    private List<Category> categories = new List<Category>();
+    private List<ApplicationUser> authors = new List<ApplicationUser>();
+
+    private ElementReference divEditorElement;
+    private bool EditorEnabled = true;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await js.InvokeAsync<string>(
+                "QuillFunctions.createQuill", divEditorElement);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await _postService.GetAllCategoriesAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var auth = await _authStateProvider.GetAuthenticationStateAsync();
+            post.AuthorId = _userManager.GetUserId(auth.User);
+            post.Content = await js.InvokeAsync<string>("QuillFunctions.getQuillContent");
+    
+            var createdPost = await _postService.CreatePostAsync(post);
+            // Navigate to a different page after successful submission
+            NavigationManager.NavigateTo("/");
+        }catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+    }
+   
+}

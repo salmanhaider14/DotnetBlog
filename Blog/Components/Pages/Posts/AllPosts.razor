@@ -1,0 +1,87 @@
+﻿@page "/posts"
+@inject PostService postService
+@inject NavigationManager _navigation
+@rendermode InteractiveServer
+
+<PageTitle>All Posts</PageTitle>
+
+<section class="relative h-[70vh] bg-cover bg-center rounded-2xl" style="background-image: url('https://plus.unsplash.com/premium_photo-1661596686441-611034b8077e?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');">
+    <div class="rounded-2xl bg-black absolute inset-0 bg-opacity-50 flex items-center justify-center">
+        <div class="text-center text-white px-4">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">All The Blogs</h1>
+            <p class="text-xl md:text-2xl">Your journey starts here</p>
+        </div>
+    </div>
+</section>
+
+<h1 class="font-bold text-2xl my-6"> Posts</h1>
+@if (posts is null)
+{
+    <h1>Loading....</h1>
+}
+else
+{
+    <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
+
+        @foreach (var post in posts)
+        {
+
+            <MudCard Class="p-4 flex flex-col gap-3 w-full md:w-[350px] h-[350px] max-h-[500px]">
+
+                <!-- Image -->
+                <MudCardMedia Image="https://images.unsplash.com/photo-1517404215738-15263e9f9178?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" Height="150" />
+
+                <!-- Category Chip -->
+                <MudChip T="string" Variant="Variant.Text" Color="Color.Primary" Class="w-max">@post.Category.Name</MudChip>
+
+                    <!-- Title with responsive handling -->
+                    <h1 class="ml-2 text-2xl font-bold ">@post.Title</h1>
+
+                <!-- Flex container for avatar and date -->
+                <div class="flex justify-between items-center ml-2">
+                    <div class="flex items-center gap-2">
+                        <MudAvatar Size="Size.Small" Color="Color.Secondary">I</MudAvatar>
+                        <MudText Typo="Typo.subtitle2">Istra Croatia</MudText>
+                    </div>
+                    <p class="text-[13px] text-gray-400"> @post.CreatedAt.ToLongDateString()</p>
+                </div>
+
+                <MudButton Variant="Variant.Outlined" OnClick="() => NavigateToPost(post.Id)">Read More</MudButton>
+            </MudCard>
+
+        }
+    </div>
+}
+<div class="flex justify-center mt-4">
+    <MudPagination Color="Color.Primary" Count="@totalPages" SelectedChanged="OnPageChanged"/>
+</div>
+
+@code {
+    private List<Post> posts;
+    private int currentPage = 1;
+    private int pageSize = 5; // Number of posts per page
+    private int totalPages = 1; // Total number of pages
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPostsAsync();
+    }
+    private async Task LoadPostsAsync()
+    {
+        var result = await postService.GetPaginatedPostsAsync(currentPage, pageSize);
+        posts = result.Posts;
+        totalPages = result.TotalPages;
+        StateHasChanged();
+    }
+    private async Task OnPageChanged(int page)
+    {
+        currentPage = page;
+        await LoadPostsAsync();
+        StateHasChanged();
+    }
+    private void NavigateToPost(int postId)
+    {
+        _navigation.NavigateTo($"/post/{postId}");
+    }
+
+}

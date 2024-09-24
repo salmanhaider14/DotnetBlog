@@ -1,0 +1,18 @@
+﻿@inherits LayoutComponentBase
+
+<div class="h-screen">
+
+
+   
+    <MudThemeProvider />
+    <MudPopoverProvider @rendermode="InteractiveServer" />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
+    <NavMenu />
+<div class="p-4">
+   
+        @Body
+
+</div>
+<Footer />
+</div>
