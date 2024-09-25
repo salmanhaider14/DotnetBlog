@@ -50,9 +50,22 @@
         <MudNavMenu Color="Color.Primary" Bordered="true">
         <div class="flex flex-col gap-[10px] mt-[20px]">
             <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-            <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
-            <MudNavLink Href="weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Cloud">Weather</MudNavLink>
-            <MudNavLink Href="auth" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Lock">Auth Required</MudNavLink>
+            <MudNavLink Href="posts" Match="NavLinkMatch.Prefix" >Blogs</MudNavLink>
+            <MudNavLink Href="authors" Match="NavLinkMatch.Prefix">Authors</MudNavLink>
+            <MudNavLink Href="categories" Match="NavLinkMatch.Prefix" >Categories</MudNavLink>
+
+                <AuthorizeView>
+                    <Authorized>
+                        <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Direction="Direction.Bottom" OffsetY="true">
+                            <MudMenuItem Href="Account/Manage">@context.User.Identity?.Name</MudMenuItem>
+                            <MudMenuItem OnClick="@LogoutAsync">Logout</MudMenuItem>
+                        </MudMenu>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudButton Href="Account/Register" Variant="Variant.Text" Color="Color.Inherit">Register</MudButton>
+                        <MudButton Href="Account/Login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+                    </NotAuthorized>
+                </AuthorizeView>
         </div>
         </MudNavMenu>
     </MudDrawer>

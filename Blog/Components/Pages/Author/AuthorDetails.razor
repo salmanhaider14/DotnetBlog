@@ -3,6 +3,7 @@
 @inject PostService _postService
 @inject UserManager<ApplicationUser> _userManager
 @rendermode InteractiveServer
+@using Size = MudBlazor.Size
 
 <PageTitle>@pageTite</PageTitle>
 
@@ -16,7 +17,7 @@ else
         <div class="rounded-2xl bg-[#F6F6F7] absolute inset-0 p-2  flex flex-col gap-4 items-center justify-center">
             <div class="flex items-center gap-2">
                 <MudAvatar Size="Size.Large" Color="Color.Secondary">U</MudAvatar>
-                <p class="text-lg ">Istra Croatia</p>
+                <p class="text-lg ">@user.FullName</p>
             </div>
             <div class="text-center px-4">
 
@@ -139,7 +140,7 @@ else
                     <div class="flex justify-between items-center ml-2">
                         <div class="flex items-center gap-2">
                             <MudAvatar Size="Size.Small" Color="Color.Secondary">I</MudAvatar>
-                            <MudText Typo="Typo.subtitle2">Istra Croatia</MudText>
+                            <MudText Typo="Typo.subtitle2">@post.Author.FullName</MudText>
                         </div>
                         <p class="text-[13px] text-gray-400"> @post.CreatedAt.ToLongDateString()</p>
                     </div>
@@ -167,7 +168,7 @@ else
 
         if(user is not null)
         {
-            pageTite = user.UserName;
+            pageTite = user.FullName;
         }
 
     }

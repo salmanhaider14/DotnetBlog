@@ -26,6 +26,7 @@ public class PostService(ApplicationDbContext _context)
             Content = post.Content,
             AuthorId = post.AuthorId,
             CategoryId = post.CategoryId,
+            ImageUrls = post.ImageUrls
         };
 
         _context.Posts.Add(postToAdd);
@@ -47,6 +48,7 @@ public class PostService(ApplicationDbContext _context)
             .OrderByDescending(p => p.CreatedAt)
             .Include(p => p.Category)
             .Include(p => p.Author)
+            .Take(9)
             .ToListAsync();
     }
     public async Task<List<Category>> GetAllCategoriesAsync()
@@ -99,28 +101,38 @@ public class PostService(ApplicationDbContext _context)
     }
 
     /// <summary>
-    /// Retrieves posts based on a search keyword in the title.
-    /// </summary>
-    public async Task<List<Post>> SearchPostsAsync(string keyword)
-    {
-        return await _context.Posts
-            .Where(p => p.Title.Contains(keyword))
-            .Include(p => p.Category)
-            .Include(p => p.Author)
-            .ToListAsync();
-    }
-
-    /// <summary>
     /// Retrieves a paginated list of posts.
     /// </summary>
-    public async Task<(List<Post> Posts, int TotalPages)> GetPaginatedPostsAsync(int pageNumber, int pageSize)
+    public async Task<(List<Post> Posts, int TotalPages)> SearchAndPaginatePostsAsync(string keyword, string category, string author, int pageNumber, int pageSize)
     {
-        var totalPosts = await _context.Posts.CountAsync();
-        var totalPages = (int)Math.Ceiling(totalPosts / (double)pageSize);
-
-        var posts = await _context.Posts
+        var query = _context.Posts
             .Include(p => p.Category)
             .Include(p => p.Author)
+            .AsQueryable();
+
+        // Apply search if a keyword is provided
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(p => p.Title.Contains(keyword) || p.Content.Contains(keyword));
+        }
+        // Apply category filter if selected
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(p => p.Category.Name == category);
+        }
+
+        // Apply author filter if selected
+        if (!string.IsNullOrWhiteSpace(author))
+        {
+            query = query.Where(p => p.Author.FullName == author);
+        }
+
+        // Calculate total number of posts
+        var totalPosts = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalPosts / (double)pageSize);
+
+        // Apply pagination
+        var posts = await query
             .OrderByDescending(p => p.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -128,6 +140,7 @@ public class PostService(ApplicationDbContext _context)
 
         return (posts, totalPages);
     }
+
     #endregion
 
     #region Update
@@ -145,7 +158,7 @@ public class PostService(ApplicationDbContext _context)
         existingPost.Title = updatedPost.Title;
         existingPost.Content = updatedPost.Content;
         existingPost.CategoryId = updatedPost.CategoryId;
-        existingPost.ImageUrl = updatedPost.ImageUrl;
+        existingPost.ImageUrls = updatedPost.ImageUrls;
         existingPost.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

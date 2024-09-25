@@ -30,7 +30,7 @@
             <div class="flex items-center text-gray-500 gap-8 mb-4">
                 <div class="flex cursor-pointer items-center gap-2" @onclick="() => HandleAuthor(post.AuthorId)">
                     <MudAvatar Size="Size.Small" Color="Color.Secondary">U</MudAvatar>
-                    <p>Istra Croatia</p>
+                    <p>@post.Author.FullName</p>
                 </div>
                 
                 <p>@post.CreatedAt.ToLongDateString()</p>

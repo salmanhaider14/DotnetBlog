@@ -2,6 +2,7 @@
 @inject NavigationManager _navigation
 @inject PostService _postService
 @rendermode InteractiveServer
+@using Size = MudBlazor.Size
 
 <PageTitle>@pageTite</PageTitle>
 
@@ -46,7 +47,7 @@ else
                     <div class="flex justify-between items-center ml-2">
                         <div class="flex items-center gap-2">
                             <MudAvatar Size="Size.Small" Color="Color.Secondary">I</MudAvatar>
-                            <MudText Typo="Typo.subtitle2">Istra Croatia</MudText>
+                            <MudText Typo="Typo.subtitle2">@post.Author.FullName</MudText>
                         </div>
                         <p class="text-[13px] text-gray-400"> @post.CreatedAt.ToLongDateString()</p>
                     </div>

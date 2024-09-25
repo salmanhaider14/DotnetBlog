@@ -13,8 +13,7 @@ public class CreatePostVM
 
     public DateTime? UpdatedAt { get; set; }
 
-    [Url(ErrorMessage = "Please enter a valid URL")]
-    public string? ImageUrl { get; set; }
+    public List<string>? ImageUrls { get; set; } = new();
 
     [Required(ErrorMessage = "Category is required")]
     public int CategoryId { get; set; }

@@ -65,10 +65,10 @@
             }
             <div @ref="@divEditorElement" />
 
-            <div class="mb-4">
+            @* <div class="mb-4">
                 <MudTextField @bind-Value="post.ImageUrl" Label="Image URL" Variant="Variant.Outlined" />
                 <ValidationMessage For="@(() => post.ImageUrl)" />
-            </div>
+            </div> *@
 
             <div class="mb-4">
                 <MudSelect @bind-Value="post.CategoryId"
@@ -110,7 +110,7 @@
             post.Title = postToUpdate.Title;
             post.Content = postToUpdate.Content;
             post.CategoryId = postToUpdate.CategoryId;
-            post.ImageUrl = postToUpdate.ImageUrl;
+            post.ImageUrls = postToUpdate.ImageUrls;
         }
         var auth = await _authStateProvider.GetAuthenticationStateAsync();
         var user = await _userManager.GetUserAsync(auth.User);

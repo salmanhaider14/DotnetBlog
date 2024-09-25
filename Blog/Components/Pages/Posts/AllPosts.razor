@@ -2,6 +2,7 @@
 @inject PostService postService
 @inject NavigationManager _navigation
 @rendermode InteractiveServer
+@inject UserManager<ApplicationUser> _userManager
 
 <PageTitle>All Posts</PageTitle>
 
@@ -15,6 +16,26 @@
 </section>
 
 <h1 class="font-bold text-2xl my-6"> Posts</h1>
+<div class="flex flex-wrap justify-between items-center mb-4">
+
+    <div class="relative w-full md:w-[40%]">
+    <!-- Search bar -->
+    <MudTextField Adornment="Adornment.End" @bind-Value="searchKeyword" @bind-Value:after="OnSearchAsync"
+                  InputType="InputType.Search" Placeholder="Search for posts..."
+                  AdornmentIcon="@Icons.Material.Filled.Search" />
+    </div>
+
+    <div class="flex items-center gap-2"> 
+    <!-- Categories filter -->
+    <MudAutocomplete T="string" Label="Categories" 
+                     SearchFunc="SearchCategories" ResetValueOnEmptyText="true" Clearable="true" ValueChanged="OnCategoryChanged" />
+
+    <!-- Authors filter -->
+    <MudAutocomplete T="string" Label="Authors" 
+                     SearchFunc="SearchAuthors" ResetValueOnEmptyText="true" Clearable="true" ValueChanged="OnAuthorChanged"/>
+    </div>
+</div>
+
 @if (posts is null)
 {
     <h1>Loading....</h1>
@@ -41,7 +62,7 @@ else
                 <div class="flex justify-between items-center ml-2">
                     <div class="flex items-center gap-2">
                         <MudAvatar Size="Size.Small" Color="Color.Secondary">I</MudAvatar>
-                        <MudText Typo="Typo.subtitle2">Istra Croatia</MudText>
+                        <MudText Typo="Typo.subtitle2">@post.Author.FullName</MudText>
                     </div>
                     <p class="text-[13px] text-gray-400"> @post.CreatedAt.ToLongDateString()</p>
                 </div>
@@ -61,6 +82,9 @@ else
     private int currentPage = 1;
     private int pageSize = 5; // Number of posts per page
     private int totalPages = 1; // Total number of pages
+    private string searchKeyword = string.Empty;
+    private string selectedCategory;
+    private string selectedAuthor;
 
     protected override async Task OnInitializedAsync()
     {
@@ -68,16 +92,46 @@ else
     }
     private async Task LoadPostsAsync()
     {
-        var result = await postService.GetPaginatedPostsAsync(currentPage, pageSize);
+        var result = await postService.SearchAndPaginatePostsAsync(searchKeyword,selectedCategory,selectedAuthor,currentPage, pageSize);
         posts = result.Posts;
         totalPages = result.TotalPages;
         StateHasChanged();
+    }
+    private async Task OnSearchAsync()
+    {
+        currentPage = 1; // Reset to first page when searching
+        await LoadPostsAsync();
     }
     private async Task OnPageChanged(int page)
     {
         currentPage = page;
         await LoadPostsAsync();
         StateHasChanged();
+    }
+    private async Task OnAuthorChanged(string author)
+    {
+        selectedAuthor = author;
+        await LoadPostsAsync();
+        StateHasChanged();
+    }
+    private async Task OnCategoryChanged(string category)
+    {
+        selectedCategory = category;
+        await LoadPostsAsync();
+        StateHasChanged();
+    }
+    private async Task<IEnumerable<string>> SearchCategories(string value, CancellationToken token)
+    {
+        var categories = await postService.GetAllCategoriesAsync();
+        return categories.Where(c => c.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+                         .Select(c => c.Name);
+    }
+
+    private async Task<IEnumerable<string>> SearchAuthors(string value, CancellationToken token)
+    {
+        var authors = await _userManager.GetUsersInRoleAsync("Author");
+        return authors.Where(a => a.FullName.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+                      .Select(a => a.FullName);
     }
     private void NavigateToPost(int postId)
     {

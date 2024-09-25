@@ -3,6 +3,7 @@
 <PageTitle>Home</PageTitle>
 @inject NavigationManager _navigation
 @rendermode InteractiveServer
+@using Size = MudBlazor.Size
 
 <section class="relative h-[70vh] bg-cover bg-center rounded-2xl" style="background-image: url('https://plus.unsplash.com/premium_photo-1661596686441-611034b8077e?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');">
     <div class="rounded-2xl bg-black absolute inset-0 bg-opacity-50 flex items-center justify-center">
@@ -40,7 +41,7 @@ else
                     <div class="flex justify-between items-center ml-2">
                         <div class="flex items-center gap-2">
                             <MudAvatar Size="Size.Small" Color="Color.Secondary">I</MudAvatar>
-                            <MudText Typo="Typo.subtitle2">Istra Croatia</MudText>
+                            <MudText Typo="Typo.subtitle2">@post.Author.FullName</MudText>
                         </div>
                         <p class="text-[13px] text-gray-400"> @post.CreatedAt.ToLongDateString()</p>
                     </div>

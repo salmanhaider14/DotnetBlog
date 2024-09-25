@@ -3,11 +3,11 @@ using Blog.Components.Account;
 using Blog.Data;
 using Blog.Data.Models;
 using Blog.Services;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
-using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,12 +43,14 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 builder.Services.AddMudServices();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddHttpClient();
-builder.Services.AddHttpClient("CookieClient")
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-    {
-        UseCookies = true,
-        CookieContainer = new CookieContainer()
-    });
+
+
+builder.Services.AddTransient<ImageUploadService>();
+const string CLOUDINARY_URL = "cloudinary://539697798452188:1rQV_o8Fui_rz8hGhE1AOuMOrpE@di6cw5ehp";
+Cloudinary cloudinary = new Cloudinary(CLOUDINARY_URL);
+cloudinary.Api.Secure = true;
+builder.Services.AddSingleton(cloudinary);
+
 
 
 var app = builder.Build();

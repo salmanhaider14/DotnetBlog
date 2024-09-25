@@ -7,8 +7,7 @@ public class Post
     public required string Content { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
-    public string? ImageUrl { get; set; }
-
+    public List<string>? ImageUrls { get; set; }
 
     public int CategoryId { get; set; }
     public required string AuthorId { get; set; }
