@@ -64,9 +64,9 @@
                     </span>
                 </div>
             }
-            <div @ref="@divEditorElement" />
+            <div class="min-h-[200px]" @ref="@divEditorElement" />
 
-            <Blog.Components.Layout.ImagesUpload Post="@post" />
+            <Blog.Components.Layout.ImagesUpload @bind-PostImageUrls="post.ImageUrls" />
 
             <div class="mb-4">
                 <MudSelect @bind-Value="post.CategoryId"

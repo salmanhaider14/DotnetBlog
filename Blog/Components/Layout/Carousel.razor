@@ -1,24 +1,32 @@
 ﻿@using Size = MudBlazor.Size
 
 <MudCarousel Class="mud-width-full mb-6 rounded-lg" Style="height:300px;" ShowArrows="@arrows" ShowBullets="@bullets" EnableSwipeGesture="@enableSwipeGesture" AutoCycle="@autocycle" AutoCycleTime="@TimeSpan.FromSeconds(10)" TData="object">
-    <MudCarouselItem Transition="transition" Color="@Color.Primary">
-        <div class="d-flex" style="height:100%">
-            <MudIcon Class="mx-auto my-auto" Icon="@Icons.Custom.Brands.MudBlazor" Size="@Size.Large" />
-        </div>
-    </MudCarouselItem>
-    <MudCarouselItem Transition="transition" Color="@Color.Secondary">
-        <div class="d-flex" style="height:100%">
-            <MudIcon Class="mx-auto my-auto" Icon="@Icons.Custom.Brands.MudBlazor" Size="@Size.Large" />
-        </div>
-    </MudCarouselItem>
-    <MudCarouselItem Transition="transition">
-        <div class="d-flex" style="height:100%">
-            <MudIcon Class="mx-auto my-auto" Icon="@Icons.Custom.Brands.MudBlazor" Color="@Color.Primary" Size="@Size.Large" />
-        </div>
-    </MudCarouselItem>
+    @if (ImageUrls != null && ImageUrls.Any())
+    {
+        @foreach (var imageUrl in ImageUrls)
+        {
+            <MudCarouselItem Transition="transition">
+                <div class="d-flex" style="height:100%">
+                    <img src="@imageUrl" alt="Image" style="width:100%; object-fit:cover;" />
+                </div>
+            </MudCarouselItem>
+        }
+    }
+    else
+    {
+        <!-- Fallback if no images are available -->
+        <MudCarouselItem Transition="transition" Color="@Color.Primary">
+            <div class="d-flex" style="height:100%">
+                <MudIcon Class="mx-auto my-auto" Icon="@Icons.Custom.Brands.MudBlazor" Size="@Size.Large" />
+            </div>
+        </MudCarouselItem>
+    }
 </MudCarousel>
 
 @code {
+    [Parameter]
+    public List<string> ImageUrls { get; set; }
+
     private bool arrows = true;
     private bool bullets = true;
     private bool enableSwipeGesture = true;

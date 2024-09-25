@@ -749,8 +749,20 @@ video {
   max-height: 500px;
 }
 
+.min-h-\[200px\] {
+  min-height: 200px;
+}
+
 .min-h-screen {
   min-height: 100vh;
+}
+
+.min-h-\[150px\] {
+  min-height: 150px;
+}
+
+.min-h-\[100px\] {
+  min-height: 100px;
 }
 
 .w-4 {

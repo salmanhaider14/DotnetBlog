@@ -1,43 +1,57 @@
 ﻿@inject ISnackbar Snackbar
 @inject ImageUploadService _imageUploadService
 
-<MudStack Style="width: 100%">
+<div class="flex flex-col " Style="width: 100%">
     <MudFileUpload T="IReadOnlyList<IBrowserFile>"
                    @ref="@_fileUpload"
                    OnFilesChanged="OnInputFileChanged"
                       AppendMultipleFiles
                     Hidden="@false"
-                    InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                    InputClass=" mud-width-full mud-height-full  z-10"
                     InputStyle="opacity:0"
+                    Accept=".png,.jpg,.jpeg,.gif,.webp"
+                    MaximumFileCount="5"
                     tabindex="-1"
                     @ondrop="@ClearDragClass"
                     @ondragenter="@SetDragClass"
                     @ondragleave="@ClearDragClass"
                     @ondragend="@ClearDragClass">
          <ActivatorContent>
-             <MudPaper Height="300px"
+             <MudPaper 
                        Outlined="true"
                        Class="@_dragClass">
                  <MudText Typo="Typo.h6">
-                     Drag and drop images here or click
+                     Drag and drop images here or click to add
                  </MudText>
-                 @foreach (var file in _fileNames)
-                {
-                    <MudChip T="string"
-                             Color="Color.Dark"
-                             Text="@file"
-                             tabindex="-1" />
-                }
+                 <MudGrid>
+                     @foreach (var imageUrl in PostImageUrls)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <!-- Responsive columns for different screen sizes -->
+                            <MudCard Style="height: 200px">
+                                <!-- Set max height for the card to prevent overflow -->
+                                <MudCardMedia Image="@imageUrl" Style="height: 150px; width: 100%;" /> <!-- Make image responsive -->
+                                <MudCardActions>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveImage(imageUrl))" />
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    }
+                    @foreach (var file in _fileNames)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <!-- Responsive columns for different screen sizes -->
+                            <MudChip T="string" Color="Color.Dark"
+                                     Text="@file"
+                                     Class="mud-width-full" /> <!-- Ensure chip takes full width -->
+                        </MudItem>
+                    }
+                </MudGrid>
             </MudPaper>
         </ActivatorContent>
     </MudFileUpload>
     <MudToolBar Gutters="@false"
                 Class="relative d-flex justify-end gap-4">
-        <MudButton Color="Color.Primary"
-                   OnClick="@OpenFilePickerAsync"
-                   Variant="Variant.Filled">
-            Open file picker
-        </MudButton>
         <MudButton Color="Color.Primary"
                    Disabled="@(!_fileNames.Any())"
                    OnClick="@Upload"
@@ -45,50 +59,71 @@
             Upload
         </MudButton>
         <MudButton Color="Color.Error"
-                   Disabled="@(!_fileNames.Any())"
+                   Disabled="@(!_fileNames.Any() && !PostImageUrls.Any())"
                    OnClick="@ClearAsync"
                    Variant="Variant.Filled">
-            Clear
+            Clear All
         </MudButton>
     </MudToolBar>
-</MudStack>
+</div>
+
 
 @code {
     [Parameter]
-    public CreatePostVM Post { get; set; }
-#nullable enable
-    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    public List<string> PostImageUrls { get; set; } = new List<string>();
+    [Parameter]
+    public EventCallback<List<string>> PostImageUrlsChanged { get; set; }
+
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full min-h-[100px]";
     private string _dragClass = DefaultDragClass;
     private readonly List<string> _fileNames = new();
     private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
+    private List<string> _validExtensions = new List<string> { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+    private IReadOnlyList<IBrowserFile> _selectedFiles = new List<IBrowserFile>();
 
     private async Task ClearAsync()
     {
         await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
         _fileNames.Clear();
+        PostImageUrls.Clear();
+        await PostImageUrlsChanged.InvokeAsync(PostImageUrls);
         ClearDragClass();
     }
-
-    private Task OpenFilePickerAsync()
-        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
-
-    private IReadOnlyList<IBrowserFile> _selectedFiles = new List<IBrowserFile>();
 
     private void OnInputFileChanged(InputFileChangeEventArgs e)
     {
         ClearDragClass();
-        _selectedFiles = e.GetMultipleFiles();  // Update the _selectedFiles list
 
+        // Calculate how many files can still be added
+        int availableSlots = 5 - PostImageUrls.Count;
+
+        // Get the newly selected files
+        var selectedFiles = e.GetMultipleFiles();
+
+        // Only take up to the available slots
+        _selectedFiles = selectedFiles
+            .Where(file => _validExtensions.Contains(Path.GetExtension(file.Name).ToLower()) && file.Size <= 5 * 1024 * 1024)
+            .Take(availableSlots)
+            .ToList();
+
+        // Update _fileNames for UI
         _fileNames.Clear();
         foreach (var file in _selectedFiles)
         {
-            _fileNames.Add(file.Name);  // Populate the UI with file names
+            _fileNames.Add(file.Name); // Populate the UI with file names
+        }
+
+        // Check if some files were rejected due to excess selection or invalid file types/size
+        if (selectedFiles.Count > _selectedFiles.Count)
+        {
+            Snackbar.Add("Some files were not added due to exceeding the limit or invalid file types/size.", Severity.Warning);
         }
     }
 
+
     private async Task Upload()
     {
-        if (_selectedFiles?.Any() ?? false)
+        if (_selectedFiles.Any())
         {
             Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
             Snackbar.Add("Uploading your files...", Severity.Info);
@@ -98,7 +133,11 @@
             if (uploadedImages != null && uploadedImages.Any())
             {
                 Snackbar.Add("Files uploaded successfully!", Severity.Success);
-                Post.ImageUrls = uploadedImages;
+                PostImageUrls.AddRange(uploadedImages);
+                await PostImageUrlsChanged.InvokeAsync(PostImageUrls);
+                _selectedFiles = [];
+                _fileNames.Clear();
+                await _fileUpload?.ClearAsync();
             }
             else
             {
@@ -111,10 +150,18 @@
         }
     }
 
+    private async Task RemoveImage(string imageUrl)
+    {
+        PostImageUrls.Remove(imageUrl);
+        PostImageUrlsChanged.InvokeAsync(PostImageUrls);
 
-    private void SetDragClass()
-        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+        if(await _imageUploadService.DeleteImageAsync(imageUrl))
+        {
+            Snackbar.Add("Image deleted", Severity.Info);
+        }
+    }
 
-    private void ClearDragClass()
-        => _dragClass = DefaultDragClass;
+    private void SetDragClass() => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass() => _dragClass = DefaultDragClass;
 }

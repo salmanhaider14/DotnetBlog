@@ -65,10 +65,7 @@
             }
             <div @ref="@divEditorElement" />
 
-            @* <div class="mb-4">
-                <MudTextField @bind-Value="post.ImageUrl" Label="Image URL" Variant="Variant.Outlined" />
-                <ValidationMessage For="@(() => post.ImageUrl)" />
-            </div> *@
+            <Blog.Components.Layout.ImagesUpload @bind-PostImageUrls="post.ImageUrls" />
 
             <div class="mb-4">
                 <MudSelect @bind-Value="post.CategoryId"
