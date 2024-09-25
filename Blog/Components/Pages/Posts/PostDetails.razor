@@ -51,9 +51,10 @@
 
             <Blog.Components.Layout.Carousel ImageUrls="@post.ImageUrls" />
 
-            
+            <div className="ql-container ql-snow">
             <div class="ql-editor"> 
                 @((MarkupString)post.Content)
+            </div>
             </div>
         </div>
     }

@@ -60,6 +60,9 @@
                     </span>
                     <span class="ql-formats">
                         <button class="ql-link"></button>
+                        <button class="ql-image"></button>
+                        <button class="ql-code-block"></button>
+                        <button class="ql-blockquote"></button>
                     </span>
                 </div>
             }
@@ -120,11 +123,17 @@
     {
         if (firstRender)
         {
-            await js.InvokeAsync<string>(
-                "QuillFunctions.createQuill", divEditorElement);
-           await js.InvokeAsync<string>("QuillFunctions.loadQuillContent", post.Content);
+            // Initialize Quill editor
+            await js.InvokeVoidAsync("QuillFunctions.createQuill", divEditorElement);
+
+            // Add a small delay to ensure Quill is fully initialized before loading content
+            await Task.Delay(1000);
+
+            // Load the content into the editor after initialization
+            await js.InvokeVoidAsync("QuillFunctions.loadQuillContent", post.Content);
         }
     }
+
 
     private async Task HandleValidSubmit()
     {

@@ -61,6 +61,9 @@
                     </span>
                     <span class="ql-formats">
                         <button class="ql-link"></button>
+                        <button class="ql-image"></button>
+                        <button class="ql-code-block"></button>
+                        <button class="ql-blockquote"></button>
                     </span>
                 </div>
             }
@@ -124,7 +127,12 @@
             var createdPost = await _postService.CreatePostAsync(post);
             // Navigate to a different page after successful submission
             NavigationManager.NavigateTo("/");
-        }catch(Exception ex)
+        }
+        catch (TaskCanceledException ex)
+        {
+            Console.WriteLine("Task was cancelled: " + ex.Message);
+        }
+        catch(Exception ex)
         {
             Console.WriteLine(ex.Message);
         }

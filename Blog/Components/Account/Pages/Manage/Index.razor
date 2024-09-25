@@ -12,31 +12,36 @@
 
 <PageTitle>Profile</PageTitle>
 
-<h3>Profile</h3>
+<h3 class="text-2xl font-bold mb-4">Profile</h3>
+
 <StatusMessage />
 
-<div class="row">
-    <div class="col-md-6">
+<div class="flex justify-center">
+    <div class="w-full max-w-md">
         <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
-                <label for="username" class="form-label">Username</label>
+            <ValidationSummary class="text-red-500 mb-4" role="alert" />
+
+            <div class="mb-4">
+                <label for="fullname" class="text-gray-600 bg-white px-1">Full Name</label>
+                <input type="text" value="@fullname" class="block w-full p-2 border border-gray-300 rounded-lg bg-gray-100" placeholder="Please choose your Full Name." disabled />
             </div>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
-                <label for="phone-number" class="form-label">Phone number</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+
+            <div class="mb-4 relative">
+                <label for="phone-number" class="text-gray-600 bg-white px-1">Phone number</label>
+                <InputText @bind-Value="Input.PhoneNumber" class="block w-full p-2 border border-gray-300 rounded-lg" placeholder="Please enter your phone number." />
+                <ValidationMessage For="() => Input.PhoneNumber" class="text-red-500" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+
+            <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">Save</button>
         </EditForm>
     </div>
 </div>
 
+
 @code {
     private ApplicationUser user = default!;
-    private string? username;
+    private string? fullname;
     private string? phoneNumber;
 
     [CascadingParameter]
@@ -48,7 +53,7 @@
     protected override async Task OnInitializedAsync()
     {
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-        username = await UserManager.GetUserNameAsync(user);
+        fullname = user.FullName;
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
         Input.PhoneNumber ??= phoneNumber;

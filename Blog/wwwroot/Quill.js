@@ -4,6 +4,11 @@
             var options = {
                 debug: 'info',
                 modules: {
+                    syntax: {
+                        highlight: function (text) {
+                            return hljs.highlightAuto(text).value;
+                        }
+                    },
                     toolbar: '#toolbar'
                 },
                 placeholder: 'Compose an epic...',
@@ -14,10 +19,20 @@
           window.quill= new Quill(quillElement, options);
         },
         getQuillContent: function () {
-            return window.quill.root.innerHTML;
+            try {
+                return window.quill.root.innerHTML;
+            } catch (error) {
+                console.error("Error fetching Quill content: ", error);
+                return "";
+            }
         },
-        loadQuillContent: function ( quillContent) {
-            window.quill.root.innerHTML = quillContent;
+        loadQuillContent: function (quillContent) {
+            try {
+                window.quill.root.innerHTML = quillContent;
+            } catch (error) {
+                console.error("Error loading Quill content: ", error);
+            }
+            
         },
     };
 })();
