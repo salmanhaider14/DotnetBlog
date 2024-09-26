@@ -8,10 +8,26 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Post> Posts { get; set; } = null!;
     public DbSet<Category> Categories { get; set; } = null!;
+    public DbSet<Comment> Comments { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // Configure the foreign key relationship for Post and Comment with Restrict delete behavior
+        builder.Entity<Comment>()
+            .HasOne(c => c.Post)
+            .WithMany(p => p.Comments)
+            .HasForeignKey(c => c.PostId)
+            .OnDelete(DeleteBehavior.Restrict); // Prevent cascading deletes
+
+        // Configure the foreign key relationship for Author (ApplicationUser) and Comment
+        builder.Entity<Comment>()
+            .HasOne(c => c.Author)
+            .WithMany(u => u.Comments)
+            .HasForeignKey(c => c.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict); // Prevent cascading deletes
+
 
         builder.Entity<Category>().HasData(
     // Main categories

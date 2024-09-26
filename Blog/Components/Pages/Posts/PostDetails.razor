@@ -3,6 +3,7 @@
 @inject PostService _postService
 @inject AuthenticationStateProvider _authStateProvider
 @inject UserManager<ApplicationUser> _userManager
+@inject CommentsService _commentService
 @inject NavigationManager _nav
 
 
@@ -49,13 +50,16 @@
                
             </div>
 
-            <Blog.Components.Layout.Carousel ImageUrls="@post.ImageUrls" />
+            <Carousel ImageUrls="@post.ImageUrls" />
 
             <div className="ql-container ql-snow">
             <div class="ql-editor"> 
                 @((MarkupString)post.Content)
             </div>
             </div>
+            <MudDivider />
+             <!-- Comments Section -->
+            <Comments PostId="@post.Id" UserId="@userId" />
         </div>
     }
 </div>

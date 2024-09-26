@@ -1,0 +1,158 @@
+﻿@inject AuthenticationStateProvider _authStateProvider
+@inject UserManager<ApplicationUser> _userManager
+@inject CommentsService _commentService
+@inject NavigationManager _nav
+@inject ILogger<Comments> _logger
+
+    <div class="my-3"> 
+@if (comments is null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else if (comments.Count == 0)
+{
+    <p>No comments yet. Be the first to comment!</p>
+}
+else
+{
+        <ul>
+            @foreach (var comment in comments)
+            {
+                <li class="mb-4">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold">@comment.Author.FullName</span>
+                        <span class="text-sm text-gray-500">@comment.CreatedAt.ToLongDateString()</span>
+                    </div>
+                    <MudTextField Value="commentBeingEdited == comment ? currentEditContent : comment.Content"
+                                  Disabled="commentBeingEdited != comment"
+                                  TextChanged="(e) => currentEditContent = e" />
+
+
+                    <div>
+                        @if (commentBeingEdited == comment)
+                        {
+                            <MudButton OnClick="UpdateComment" Color="Color.Primary">Save</MudButton>
+                            <MudButton OnClick="CancelEdit" Color="Color.Secondary">Cancel</MudButton>
+                        }
+                        else
+                        {
+                            @if(comment.AuthorId == UserId)
+                            {
+                                <MudButton OnClick="() => StartEdit(comment)" Color="Color.Primary">Edit</MudButton>
+                                <MudButton OnClick="() => DeleteComment(comment.Id)" Color="Color.Error">Delete</MudButton>
+                            }
+                           
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+}
+
+<AuthorizeView>
+    <div>
+        <MudTextField Variant="Variant.Outlined" @bind-Value="newCommentContent" Placeholder="Add a comment..." />
+        <MudButton Variant="Variant.Filled" OnClick="SubmitComment" Disabled="@string.IsNullOrWhiteSpace(newCommentContent)" Color="Color.Primary">
+            Post Comment
+        </MudButton>
+    </div>
+</AuthorizeView>
+
+</div>
+
+@code {
+    [Parameter]
+    public int PostId { get; set; }
+    [Parameter]
+    public string UserId{ get; set; }
+
+    private List<Comment> comments;
+    private string newCommentContent;
+    private Comment commentBeingEdited;
+    private string currentEditContent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadComments();
+    }
+
+    private async Task LoadComments()
+    {
+        comments = await _commentService.GetCommentsByPostIdAsync(PostId);
+    }
+
+    private async Task SubmitComment()
+    {
+        if (!string.IsNullOrWhiteSpace(newCommentContent))
+        {
+            var newComment = new Comment
+                {
+                    Content = newCommentContent,
+                    PostId = PostId,
+                    AuthorId = UserId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+            try
+            {
+                await _commentService.AddCommentAsync(newComment);
+                comments.Add(newComment); // Optimistic UI update
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError($"Error submitting comment: {ex.Message}");
+                // Optionally, you can show an error message to the user.
+            }
+            finally
+            {
+                newCommentContent = string.Empty;
+                StateHasChanged();
+            }
+        }
+    }
+    private void StartEdit(Comment comment)
+    {
+        commentBeingEdited = comment;
+        currentEditContent = comment.Content;
+    }
+
+    private async Task UpdateComment()
+    {
+        if (commentBeingEdited != null)
+        {
+            try
+            {
+                // Update the comment's content
+                commentBeingEdited.Content = currentEditContent; // Save the edited content
+                await _commentService.EditCommentAsync(commentBeingEdited); // Call the service to update in the database
+                commentBeingEdited = null; // Exit editing mode
+            }
+            catch (Exception ex)
+            {
+                // Handle error (e.g., show a message)
+            }
+        }
+    }
+
+    private void CancelEdit()
+    {
+        commentBeingEdited = null; // Exit editing mode without saving changes
+    }
+    private async Task DeleteComment(int commentId)
+    {
+        try
+        {
+            await _commentService.DeleteCommentAsync(commentId);
+            comments.RemoveAll(c => c.Id == commentId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error deleting comment: {ex.Message}");
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+}

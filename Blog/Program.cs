@@ -64,6 +64,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
     options.TokenLifespan = TimeSpan.FromHours(3));
+
+builder.Services.AddScoped<CommentsService>();
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
