@@ -39,7 +39,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
 builder.Services.AddMudServices();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddHttpClient();
@@ -56,6 +56,14 @@ builder.Services.AddSignalR(options =>
     options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 MB in bytes
 });
 
+builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("AuthMessageSenderOptions"));
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromDays(5);
+    options.SlidingExpiration = true;
+});
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+    options.TokenLifespan = TimeSpan.FromHours(3));
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

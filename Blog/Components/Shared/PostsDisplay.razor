@@ -1,0 +1,87 @@
+﻿@inject NavigationManager _navigation
+@inject AuthenticationStateProvider _authStateProvider
+@inject UserManager<ApplicationUser> _userManager
+
+@foreach(var post in Posts)
+{
+    <MudCard Class="p-4 flex flex-col gap-3 w-full md:w-[350px] h-[350px] max-h-[500px]">
+
+        <!-- Image -->
+        <MudCardMedia Image="https://images.unsplash.com/photo-1517404215738-15263e9f9178?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" Height="150" />
+
+       
+           
+                <MudChip T="string" Variant="Variant.Text" Color="Color.Primary" Class="w-max">@post.Category.Name</MudChip>
+         
+                
+            
+       
+      
+            <!-- Title with responsive handling -->
+            <h1 class="ml-2 text-2xl font-bold ">@post.Title</h1>
+
+        <!-- Flex container for avatar and date -->
+        <div class="flex justify-between items-center ml-2">
+            @if (IsAuthor && userId == post.AuthorId)
+            {
+                <AuthorizeView Roles="Author,Admin">
+                   
+                    
+                        <div class="flex items-center ">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" aria-label="edit" OnClick="() => HandleEdit(post.Id)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="delete" />
+                        </div
+                </AuthorizeView>
+            }
+            else
+            {
+                <div class="flex items-center gap-2">
+                    <MudAvatar Size="Size.Small" Color="Color.Secondary">I</MudAvatar>
+
+                    @if (post.Author is not null)
+                    {
+                        <MudText Typo="Typo.subtitle2">
+                            @post.Author.FullName
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.subtitle2">
+                            Author
+                        </MudText>
+                    }
+                </div>
+            }
+           
+                <p class="text-[13px] text-gray-400"> @post.CreatedAt.ToLongDateString()</p>
+        </div>
+
+        <MudButton Variant="Variant.Outlined" OnClick="() => NavigateToPost(post.Id)">Read More</MudButton>
+    </MudCard>
+}
+
+@code {
+    [Parameter]
+    public List<Post> Posts { get; set; }
+    [Parameter]
+    public bool IsAuthor { get; set; }
+    private string userId = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await _authStateProvider.GetAuthenticationStateAsync();
+        var user = await _userManager.GetUserAsync(auth.User);
+        if (user is not null)
+        {
+            userId = user.Id;
+        }
+    }
+    private void HandleEdit(int postId)
+    {
+        _navigation.NavigateTo($"/update-post/{postId}");
+    }
+    private void NavigateToPost(int postId)
+    {
+        _navigation.NavigateTo($"/post/{postId}");
+    }
+
+}

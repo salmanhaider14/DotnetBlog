@@ -60,6 +60,7 @@ public class PostService(ApplicationDbContext _context)
     {
         return _context.Categories
             .Include(c => c.Posts)
+            .ThenInclude(p => p.Author)
             .FirstOrDefault(c => c.Id == Id);
 
     }

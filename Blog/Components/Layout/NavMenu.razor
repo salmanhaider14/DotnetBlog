@@ -11,14 +11,11 @@
 <nav class="flex justify-between items-center p-2 px-3 ">
     <!-- Left Side: Site title and nav links -->
     <div class="flex items-center space-x-6">
-        
-            
+   
             <a class="text-lg md:text-xl font-bold ml-3" href="/">My Blog</a>
-        
-
-        <!-- Links Group (Hidden on small screens) -->
-        
+                
     </div>
+    <!-- Links Group (Hidden on small screens) -->
     <div class="hidden md:flex md:items-center space-x-2 font-semibold">
         <MudNavLink Href="/" Match="NavLinkMatch.All" Class="p-1 leading-none whitespace-nowrap font-semibold">Home</MudNavLink>
         <MudNavLink Href="posts" Match="NavLinkMatch.Prefix" Class="whitespace-nowrap font-semibold">Blogs</MudNavLink>
@@ -27,20 +24,23 @@
     </div>
     <!-- Right Side: Search, Auth, Profile -->
     <div class="hidden md:flex items-center space-x-4">
-       
 
+        <AuthorizeView Roles="Author,Admin">
+            <MudButton Variant="Variant.Filled" OnClick="NavigateToCreatePost">Make Post</MudButton>
+        </AuthorizeView>
         <AuthorizeView>
             <Authorized>
                 <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Direction="Direction.Bottom" OffsetY="true">
                     <MudMenuItem Href="Account/Manage">@context.User.Identity?.Name</MudMenuItem>
                         <MudMenuItem OnClick="@LogoutAsync">Logout</MudMenuItem>
-                    </MudMenu>
+                 </MudMenu>
                 </Authorized>
                 <NotAuthorized>
                     <MudButton Href="Account/Register" Variant="Variant.Text" Color="Color.Inherit">Register</MudButton>
                     <MudButton Href="Account/Login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
                 </NotAuthorized>
             </AuthorizeView>
+           
         </div>
         <div class="block md:hidden">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="@(() => OpenDrawer(Anchor.Start))" />
@@ -104,5 +104,9 @@
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+    private void NavigateToCreatePost()
+    {
+        NavigationManager.NavigateTo("/create-post");
     }
 }

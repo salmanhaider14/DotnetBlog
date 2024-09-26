@@ -1,0 +1,23 @@
+﻿@page "/Account/Manage/MyPosts"
+@inject UserManager<ApplicationUser> _userManager
+
+@if(_user is not null)
+{
+    <a href=@authorLink class="text-blue-600 text-xl font-semibold">Click here to see your posts</a>
+}
+@code {
+    [CascadingParameter]
+    public HttpContext _httpContext { get; set; }
+    private ApplicationUser _user;
+    private string authorLink = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await _userManager.GetUserAsync(_httpContext.User);
+        if(_user is not null)
+        {
+            authorLink = $"/author/{_user.Id}";
+        }
+       
+    }
+}
