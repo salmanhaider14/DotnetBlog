@@ -9,7 +9,9 @@ public class Comment
 
     public required string AuthorId { get; set; }
     public int PostId { get; set; }
-
+    public int? ParentCommentId { get; set; }
+    public Comment ParentComment { get; set; }
+    public List<Comment> ChildComments { get; set; } = new List<Comment>();
     // Navigation Properties
     public ApplicationUser Author { get; set; }
     public Post Post { get; set; }

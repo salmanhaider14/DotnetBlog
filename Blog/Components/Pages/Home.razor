@@ -4,6 +4,7 @@
 @inject NavigationManager _navigation
 @rendermode InteractiveServer
 @using Size = MudBlazor.Size
+@inject ILogger<Home> _logger
 
 <section class="relative h-[70vh] bg-cover bg-center rounded-2xl" style="background-image: url('https://plus.unsplash.com/premium_photo-1661596686441-611034b8077e?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');">
     <div class="rounded-2xl bg-black absolute inset-0 bg-opacity-50 flex items-center justify-center">
@@ -35,7 +36,15 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        posts = await postService.GetAllPostsAsync();
+        try
+        {
+            posts = await postService.GetAllPostsAsync();
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError("Error getting posts", ex);
+        }
+        
     }
     private void NavigateToBlogs()
     {

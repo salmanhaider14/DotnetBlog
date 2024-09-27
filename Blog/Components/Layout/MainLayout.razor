@@ -10,8 +10,15 @@
     <MudSnackbarProvider @rendermode="InteractiveServer" />
     <NavMenu />
 <div class="p-4">
-   
-        @Body
+    <ErrorBoundary>   
+       <ChildContent>
+                @Body
+       </ChildContent>
+       <ErrorContent>
+           <ErrorDisplay />
+       </ErrorContent>
+       
+        </ErrorBoundary>
 
 </div>
 <Footer />

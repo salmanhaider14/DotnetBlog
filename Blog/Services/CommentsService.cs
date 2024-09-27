@@ -10,12 +10,37 @@ public class CommentsService(ApplicationDbContext context)
 
     public async Task<List<Comment>> GetCommentsByPostIdAsync(int postId)
     {
-        return await _context.Comments
-                             .Where(c => c.PostId == postId)
-                             .Include(c => c.Author)
-                             .ToListAsync();
+        // Get top-level comments for the specified post
+        var topLevelComments = await _context.Comments
+            .Where(c => c.PostId == postId && c.ParentCommentId == null)
+            .Include(c => c.Author)
+            .ToListAsync();
+
+        // Recursively load child comments
+        foreach (var comment in topLevelComments)
+        {
+            await LoadChildComments(comment);
+        }
+
+        return topLevelComments;
     }
 
+    private async Task LoadChildComments(Comment parentComment)
+    {
+        // Load child comments for the given parent comment
+        var childComments = await _context.Comments
+            .Where(c => c.ParentCommentId == parentComment.Id)
+            .Include(c => c.Author) // Include the author of child comments
+            .ToListAsync();
+
+        parentComment.ChildComments = childComments; // Assign loaded child comments
+
+        // Recursively load child comments for each child comment
+        foreach (var childComment in childComments)
+        {
+            await LoadChildComments(childComment);
+        }
+    }
     public async Task<Comment> AddCommentAsync(Comment comment)
     {
         _context.Comments.Add(comment);
@@ -43,22 +68,35 @@ public class CommentsService(ApplicationDbContext context)
 
     public async Task DeleteCommentAsync(int commentId)
     {
-        var comment = await _context.Comments.FindAsync(commentId);
+        var comment = await _context.Comments
+            .Include(c => c.ChildComments) // Load child comments
+            .FirstOrDefaultAsync(c => c.Id == commentId);
 
         if (comment is null)
         {
             throw new KeyNotFoundException($"Comment with ID {commentId} was not found.");
         }
 
+        // Recursively delete all child comments
+        await DeleteChildCommentsAsync(comment);
+
+        // Delete the parent comment
         _context.Comments.Remove(comment);
         await _context.SaveChangesAsync();
     }
 
-
-    public async Task<Comment?> GetCommentByIdAsync(int commentId)
+    private async Task DeleteChildCommentsAsync(Comment comment)
     {
-        return await _context.Comments
-                             .Include(c => c.Author)  // Include the author if needed
-                             .FirstOrDefaultAsync(c => c.Id == commentId);
+        // Load all child comments
+        var childComments = await _context.Comments
+            .Where(c => c.ParentCommentId == comment.Id)
+            .ToListAsync();
+
+        // Recursively delete each child comment
+        foreach (var childComment in childComments)
+        {
+            await DeleteChildCommentsAsync(childComment); // Delete child comments recursively
+            _context.Comments.Remove(childComment); // Remove the child comment from the context
+        }
     }
 }

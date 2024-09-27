@@ -5,6 +5,7 @@
 @inject UserManager<ApplicationUser> _userManager
 @inject CommentsService _commentService
 @inject NavigationManager _nav
+@inject ILogger<PostDetails> _logger
 
 
 <PageTitle>@pageTitle</PageTitle>
@@ -57,7 +58,14 @@
                 @((MarkupString)post.Content)
             </div>
             </div>
+            <h1 class="text-2xl font-bold my-3">Comments</h1>
+            <AuthorizeView>
+                <NotAuthorized>
+                    <p class="text-md mb-3 text-gray-600 font-semibold">Sign In to post comments</p>
+                </NotAuthorized>
+            </AuthorizeView>
             <MudDivider />
+            
              <!-- Comments Section -->
             <Comments PostId="@post.Id" UserId="@userId" />
         </div>
@@ -73,18 +81,26 @@
 
     protected override async Task OnInitializedAsync()
     {
-        post = await _postService.GetPostByIdAsync(int.Parse(Id));
-        var auth = await _authStateProvider.GetAuthenticationStateAsync();
-        var user =await _userManager.GetUserAsync(auth.User);
+        try
+        {
+            post = await _postService.GetPostByIdAsync(int.Parse(Id));
+            var auth = await _authStateProvider.GetAuthenticationStateAsync();
+            var user = await _userManager.GetUserAsync(auth.User);
 
-        if(user is not null)
-        {
-            userId = user.Id;
+            if (user is not null)
+            {
+                userId = user.Id;
+            }
+            if (post is not null)
+            {
+                pageTitle = post.Title;
+            }
         }
-        if(post is not null)
+        catch(Exception ex)
         {
-            pageTitle = post.Title;
+            _logger.LogError("Error getting post or user", ex);
         }
+
     }
     private void HandleEdit(int postId)
     {

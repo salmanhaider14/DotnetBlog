@@ -1,0 +1,141 @@
+﻿@inject CommentsService _commentService
+@inject ILogger<CommentDisplay> _logger
+
+<div class="flex justify-between items-center">
+    <span class="font-bold">@Comment.Author.FullName</span>
+    <span class="text-sm text-gray-500">@Comment.CreatedAt.ToLongDateString()</span>
+</div>
+
+
+@if (IsEditing)
+{
+    <MudTextField @bind-Value="currentEditContent" />
+    <MudButton Color="Color.Primary" OnClick="SaveComment">Save</MudButton>
+    <MudButton Color="Color.Secondary" OnClick="CancelEdit">Cancel</MudButton>
+}
+else
+{
+    <MudTextField @bind-Value="@Comment.Content" Disabled="true" />
+    <AuthorizeView>
+    @if (IsAuthor)
+    {
+        <MudButton Color="Color.Primary" OnClick="StartEdit">Edit</MudButton>
+        <MudButton Color="Color.Error" OnClick="DeleteComment">Delete</MudButton>
+    }
+    </AuthorizeView>
+}
+
+@if (IsReplying)
+{
+    <MudTextField Variant="Variant.Outlined" @bind-Value="replyContent" Placeholder="Reply to this comment..." />
+    <MudButton Color="Color.Primary" OnClick="SubmitReply">Reply</MudButton>
+    <MudButton Color="Color.Secondary" OnClick="CancelReply">Cancel</MudButton>
+}
+else
+{
+    <AuthorizeView>
+    <MudButton Color="Color.Primary" OnClick="StartReply">Reply</MudButton>
+    </AuthorizeView>
+}
+
+
+@if (Comment.ChildComments.Any())
+{
+    <ul class="ml-6">
+        @foreach (var childComment in Comment.ChildComments)
+        {
+            <li class="mb-2">
+                <CommentDisplay Comment="childComment" UserId="@UserId" PostId="@PostId" OnCommentUpdated="OnCommentUpdated" />
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public Comment Comment { get; set; }
+    [Parameter] public string UserId { get; set; }
+    [Parameter] public int PostId { get; set; }
+    [Parameter] public EventCallback OnCommentUpdated { get; set; }
+
+    private bool IsEditing = false;
+    private bool IsReplying = false;
+    private bool IsAuthor => Comment.AuthorId == UserId;
+    private string currentEditContent;
+    private string replyContent;
+
+    private void StartEdit()
+    {
+        IsEditing = true;
+        currentEditContent = Comment.Content;
+    }
+
+    private void CancelEdit()
+    {
+        IsEditing = false;
+        currentEditContent = string.Empty;
+    }
+
+    private async Task SaveComment()
+    {
+        try
+        {
+            Comment.Content = currentEditContent;
+            await _commentService.EditCommentAsync(Comment);
+            IsEditing = false;
+            await OnCommentUpdated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error updating comment: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteComment()
+    {
+        try
+        {
+            await _commentService.DeleteCommentAsync(Comment.Id);
+            await OnCommentUpdated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error deleting comment: {ex.Message}");
+        }
+    }
+
+    private void StartReply() => IsReplying = true;
+    private void CancelReply()
+    {
+        IsReplying = false;
+        replyContent = string.Empty;
+    }
+
+    private async Task SubmitReply()
+    {
+        if (!string.IsNullOrWhiteSpace(replyContent))
+        {
+            var replyComment = new Comment
+                {
+                    Content = replyContent,
+                    PostId = PostId,
+                    ParentCommentId = Comment.Id,
+                    AuthorId = UserId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+            try
+            {
+                await _commentService.AddCommentAsync(replyComment);
+                await OnCommentUpdated.InvokeAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error submitting reply: {ex.Message}");
+            }
+            finally
+            {
+                CancelReply();
+            }
+        }
+    }
+}

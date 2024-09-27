@@ -1,0 +1,27 @@
+﻿@inject NavigationManager NavigationManager
+<div class="flex flex-col items-center justify-center h-screen bg-gray-50">
+    <!-- Icon with MudBlazor -->
+    <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error" />
+
+    <!-- Error Message -->
+    <h1 class="text-3xl font-bold text-red-600 mt-4">Oops! Something went wrong</h1>
+
+    <!-- Detailed explanation -->
+    <p class="text-gray-600 mt-2 text-center">
+        An unexpected error has occurred. Please try again later or contact support if the issue persists.
+    </p>
+
+    <!-- Action buttons (optional) -->
+    <div class="mt-6">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" @onclick="GoHome">
+            Return to Home
+        </button>
+    </div>
+</div>
+
+@code{
+    private void GoHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

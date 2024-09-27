@@ -2,6 +2,7 @@
 @inject PostService postService
 @rendermode InteractiveServer
 @inject UserManager<ApplicationUser> _userManager
+@inject ILogger<AllPosts> _logger
 
 <PageTitle>All Posts</PageTitle>
 
@@ -65,10 +66,20 @@ else
     }
     private async Task LoadPostsAsync()
     {
-        var result = await postService.SearchAndPaginatePostsAsync(searchKeyword,selectedCategory,selectedAuthor,currentPage, pageSize);
-        posts = result.Posts;
-        totalPages = result.TotalPages;
-        StateHasChanged();
+        try
+        {
+            var result = await postService.SearchAndPaginatePostsAsync(searchKeyword, selectedCategory, selectedAuthor, currentPage, pageSize);
+            posts = result.Posts;
+            totalPages = result.TotalPages;
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError("Error Loading Posts", ex);
+        }
+        finally
+        {
+            StateHasChanged();
+        }
     }
     private async Task OnSearchAsync()
     {
@@ -79,31 +90,45 @@ else
     {
         currentPage = page;
         await LoadPostsAsync();
-        StateHasChanged();
     }
     private async Task OnAuthorChanged(string author)
     {
         selectedAuthor = author;
         await LoadPostsAsync();
-        StateHasChanged();
     }
     private async Task OnCategoryChanged(string category)
     {
         selectedCategory = category;
         await LoadPostsAsync();
-        StateHasChanged();
     }
     private async Task<IEnumerable<string>> SearchCategories(string value, CancellationToken token)
     {
-        var categories = await postService.GetAllCategoriesAsync();
-        return categories.Where(c => c.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
-                         .Select(c => c.Name);
+        try
+        {
+            var categories = await postService.GetAllCategoriesAsync();
+            return categories.Where(c => c.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+                             .Select(c => c.Name);
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError("Error getting categories", ex);
+            return Enumerable.Empty<string>();
+        }
     }
 
-    private async Task<IEnumerable<string>> SearchAuthors(string value, CancellationToken token)
+    private async Task<IEnumerable<string?>> SearchAuthors(string value, CancellationToken token)
     {
-        var authors = await _userManager.GetUsersInRoleAsync("Author");
-        return authors.Where(a => a.FullName.Contains(value, StringComparison.InvariantCultureIgnoreCase))
-                      .Select(a => a.FullName);
+        try
+        {
+            var authors = await _userManager.GetUsersInRoleAsync("Author");
+            return authors.Where(a => a.FullName.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+                          .Select(a => a.FullName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error getting authors", ex);
+            return Enumerable.Empty<string>();
+        }
+
     }
 }
