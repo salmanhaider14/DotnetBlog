@@ -6,6 +6,8 @@
 @attribute [Authorize(Roles ="Author,Admin")]
 @inject AuthenticationStateProvider _authStateProvider
 @inject UserManager<ApplicationUser> _userManager
+@inject ILogger<CreatePost> _logger
+@inject ISnackbar Snackbar
 
 
 <MudContainer Class="mt-16">
@@ -13,13 +15,13 @@
 
     <EditForm Model="@post" OnValidSubmit="@HandleValidSubmit" FormName="CreatePostForm">
         <DataAnnotationsValidator />
-        <ValidationSummary />
+       @*  <ValidationSummary /> *@
 
         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div class="mb-4">
                
                 <MudTextField @bind-Value="post.Title" Label="Title" Variant="Variant.Outlined" />
-                <ValidationMessage For="@(() => post.Title)" />
+                <ValidationMessage For="@(() => post.Title)" class="text-red-500 text-sm mt-1" />
             </div>
             @if (EditorEnabled)
             {
@@ -72,22 +74,25 @@
             <ImagesUpload @bind-PostImageUrls="post.ImageUrls" />
 
             <div class="mb-4">
-                <MudSelect @bind-Value="post.CategoryId"
+                <MudSelect 
+                           T = "int"
                            Variant="Variant.Outlined"
                            Label="Select Category"
                            Placeholder="Select Category"
                            Required
+                           @bind-Value="post.CategoryId"
                            >
+                  
                     @foreach (var category in categories)
                     {
                         <MudSelectItem Value="category.Id">@category.Name</MudSelectItem>
                     }
                 </MudSelect>
-                <ValidationMessage For="@(() => post.CategoryId)" />
+                <p class="text-red-500 text-sm mt-1">@categoryError</p>
             </div>
 
             <div class="flex items-center justify-between">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Create Post</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" >Create Post</MudButton>
             </div>
         </div>
     </EditForm>
@@ -98,46 +103,77 @@
 
     private CreatePostVM post = new CreatePostVM();
     private List<Category> categories = new List<Category>();
-    private List<ApplicationUser> authors = new List<ApplicationUser>();
+    private string categoryError = string.Empty;
 
     private ElementReference divEditorElement;
     private bool EditorEnabled = true;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+
         if (firstRender)
         {
-            await js.InvokeAsync<string>(
+            try
+            {
+                await js.InvokeAsync<string>(
                 "QuillFunctions.createQuill", divEditorElement);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"Error creating text editor : {ex}");
+                Snackbar.Add("Error creating the text editor", Severity.Error);
+
+            }
+
         }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        var res = await _postService.GetAllCategoriesAsync();
-        categories = res.Categories;
+        try
+        {
+            var res = await _postService.GetAllCategoriesAsync();
+            categories = res.Categories;
+            categoryError = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error fetching categories : {ex}");
+            Snackbar.Add("Error fetching categories. Please try again later.", Severity.Error);
+
+        }
     }
 
     private async Task HandleValidSubmit()
     {
         try
         {
+            post.Content = await js.InvokeAsync<string>("QuillFunctions.getQuillContent");
+            if (string.IsNullOrWhiteSpace(post.Content) || post.Content.Length < 50)
+            {
+                // Display custom error message
+                Snackbar.Add("Content must be at least 50 characters long.", Severity.Error);
+                return;
+            }
+            if (post.CategoryId == 0)
+            {
+                categoryError = "Pls select a category";
+                return;
+            }
             var auth = await _authStateProvider.GetAuthenticationStateAsync();
             post.AuthorId = _userManager.GetUserId(auth.User);
-            post.Content = await js.InvokeAsync<string>("QuillFunctions.getQuillContent");
-    
             var createdPost = await _postService.CreatePostAsync(post);
+            Snackbar.Add("Post created successfully!", Severity.Success);
+
             // Navigate to a different page after successful submission
             NavigationManager.NavigateTo("/");
         }
-        catch (TaskCanceledException ex)
-        {
-            Console.WriteLine("Task was cancelled: " + ex.Message);
-        }
         catch(Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogError("Error creating post: " + ex.Message);
+            Snackbar.Add("Error creating the post. Please try again.", Severity.Error);
+
         }
 
     }
-   
+
 }

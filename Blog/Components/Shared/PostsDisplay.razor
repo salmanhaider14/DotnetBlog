@@ -4,6 +4,7 @@
 @inject PostService _postService
 @inject IDialogService DialogService
 @inject ILogger<PostsDisplay> _logger
+@inject ISnackbar Snackbar
 
 @foreach(var post in Posts)
 {
@@ -64,12 +65,20 @@
     private string userId = string.Empty;
     protected override async Task OnInitializedAsync()
     {
-        var auth = await _authStateProvider.GetAuthenticationStateAsync();
-        var user = await _userManager.GetUserAsync(auth.User);
-        if (user is not null)
+        try
         {
-            userId = user.Id;
+            var auth = await _authStateProvider.GetAuthenticationStateAsync();
+            var user = await _userManager.GetUserAsync(auth.User);
+            if (user is not null)
+            {
+                userId = user.Id;
+            }
         }
+        catch(Exception ex)
+        {
+            _logger.LogError($"Error getting user in PostsDisplay : {ex}");
+        }
+
     }
     private void HandleEdit(int postId)
     {
@@ -99,13 +108,16 @@
                     _logger.LogInformation("Post successfully deleted");
                     _navigation.NavigateTo("/");
                 }
+                else
                 {
                     _logger.LogInformation("Post wasn't deleted due to some error");
+                    Snackbar.Add("Post wasn't deleted due to some error. Try again later", Severity.Error);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting post : {ex}");
+                Snackbar.Add("Post wasn't deleted due to some error. Try again later", Severity.Error);
             }
         }
     }

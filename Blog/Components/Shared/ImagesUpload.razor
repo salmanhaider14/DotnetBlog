@@ -1,5 +1,6 @@
 ﻿@inject ISnackbar Snackbar
 @inject ImageUploadService _imageUploadService
+@inject ILogger<ImagesUpload> _logger
 
 <div class="flex flex-col " Style="width: 100%">
     <MudFileUpload T="IReadOnlyList<IBrowserFile>"
@@ -123,42 +124,60 @@
 
     private async Task Upload()
     {
-        if (_selectedFiles.Any())
+        try
         {
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Add("Uploading your files...", Severity.Info);
-
-            var uploadedImages = await _imageUploadService.UploadImagesAsync(_selectedFiles);
-
-            if (uploadedImages != null && uploadedImages.Any())
+            if (_selectedFiles.Any())
             {
-                Snackbar.Add("Files uploaded successfully!", Severity.Success);
-                PostImageUrls.AddRange(uploadedImages);
-                await PostImageUrlsChanged.InvokeAsync(PostImageUrls);
-                _selectedFiles = [];
-                _fileNames.Clear();
-                await _fileUpload?.ClearAsync();
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+                Snackbar.Add("Uploading your files...", Severity.Info);
+
+                var uploadedImages = await _imageUploadService.UploadImagesAsync(_selectedFiles);
+
+                if (uploadedImages != null && uploadedImages.Any())
+                {
+                    Snackbar.Add("Files uploaded successfully!", Severity.Success);
+                    PostImageUrls.AddRange(uploadedImages);
+                    await PostImageUrlsChanged.InvokeAsync(PostImageUrls);
+                    _selectedFiles = [];
+                    _fileNames.Clear();
+                    await _fileUpload?.ClearAsync();
+                }
+                else
+                {
+                    Snackbar.Add("File upload failed.", Severity.Error);
+                }
             }
             else
             {
-                Snackbar.Add("File upload failed.", Severity.Error);
+                Snackbar.Add("No files selected.", Severity.Warning);
             }
         }
-        else
+        catch(Exception ex)
         {
-            Snackbar.Add("No files selected.", Severity.Warning);
+            _logger.LogError($"Error uploading images : {ex}");
+            Snackbar.Add("File upload failed.", Severity.Error);
         }
+
     }
 
     private async Task RemoveImage(string imageUrl)
     {
-        PostImageUrls.Remove(imageUrl);
-        PostImageUrlsChanged.InvokeAsync(PostImageUrls);
-
-        if(await _imageUploadService.DeleteImageAsync(imageUrl))
+        try
         {
-            Snackbar.Add("Image deleted", Severity.Info);
+            PostImageUrls.Remove(imageUrl);
+            await PostImageUrlsChanged.InvokeAsync(PostImageUrls);
+
+            if (await _imageUploadService.DeleteImageAsync(imageUrl))
+            {
+                Snackbar.Add("Image deleted", Severity.Info);
+            }
         }
+        catch(Exception ex)
+        {
+            _logger.LogError($"Error deleting image: {ex}");
+            Snackbar.Add("Error deleting image", Severity.Error);
+        }
+
     }
 
     private void SetDragClass() => _dragClass = $"{DefaultDragClass} mud-border-primary";

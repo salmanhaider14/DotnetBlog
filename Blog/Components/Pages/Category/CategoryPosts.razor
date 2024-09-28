@@ -5,6 +5,7 @@
 @using Size = MudBlazor.Size
 @inject ILogger<CategoryPosts> _logger
 @inject UserManager<ApplicationUser> _userManager
+@inject ISnackbar Snackbar
 
 <PageTitle>@pageTite</PageTitle>
 
@@ -86,6 +87,7 @@ else
         catch (Exception ex)
         {
             _logger.LogError($"Error getting categories or category posts : {ex}");
+            Snackbar.Add("Error getting categories or posts", Severity.Error);
         }
     }
 

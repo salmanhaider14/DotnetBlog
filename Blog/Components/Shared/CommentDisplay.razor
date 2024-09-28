@@ -1,5 +1,6 @@
 ﻿@inject CommentsService _commentService
 @inject ILogger<CommentDisplay> _logger
+@inject ISnackbar Snackbar
 
 <div class="flex justify-between items-center my-2">
     <div class="flex items-center gap-2">
@@ -91,6 +92,7 @@ else
         catch (Exception ex)
         {
             _logger.LogError($"Error updating comment: {ex.Message}");
+            Snackbar.Add("Error updating comment", Severity.Error);
         }
     }
 
@@ -104,6 +106,7 @@ else
         catch (Exception ex)
         {
             _logger.LogError($"Error deleting comment: {ex.Message}");
+            Snackbar.Add("Error deleting comment", Severity.Error);
         }
     }
 
@@ -135,6 +138,7 @@ else
             catch (Exception ex)
             {
                 _logger.LogError($"Error submitting reply: {ex.Message}");
+                Snackbar.Add("Error submitting reply", Severity.Error);
             }
             finally
             {

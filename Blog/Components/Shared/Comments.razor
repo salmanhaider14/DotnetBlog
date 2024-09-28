@@ -1,11 +1,14 @@
 ﻿@inject CommentsService _commentService
 @inject NavigationManager _nav
 @inject ILogger<Comments> _logger
+@inject ISnackbar Snackbar
 
 <div class="my-3">
     @if (comments is null)
     {
-        <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+        <MudSkeleton />
+        <MudSkeleton Animation="Animation.False" />
+        <MudSkeleton Animation="Animation.Wave" />
     }
     else if (comments.Count == 0)
     {
@@ -57,6 +60,7 @@
         catch (Exception ex)
         {
             _logger.LogError($"Error loading comments: {ex.Message}");
+            Snackbar.Add("Error loading comments", Severity.Error);
         }
     }
 
@@ -80,6 +84,8 @@
             catch (Exception ex)
             {
                 _logger.LogError($"Error submitting comment: {ex.Message}");
+                Snackbar.Add("Error submitting comment", Severity.Error);
+
             }
             finally
             {

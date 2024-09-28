@@ -7,6 +7,7 @@
 @inject NavigationManager _nav
 @inject ILogger<PostDetails> _logger
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 
 <PageTitle>@pageTitle</PageTitle>
@@ -15,7 +16,18 @@
 <div class="min-h-screen flex justify-center items-start "> <!-- Main Flex Container for Centering -->
     @if(post is null)
     {
-        <h1 class="text-2xl font-bold">Loading....</h1>
+        <MudCard Class="w-full max-w-[800px] p-6 bg-white shadow-md rounded-lg border-2 mt-12">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" />
+            <MudCardContent>
+                <MudSkeleton Width="30%" Height="42px;" />
+                <MudSkeleton Width="80%" />
+                <MudSkeleton Width="100%" />
+            </MudCardContent>
+            <MudCardActions>
+                <MudSkeleton Width="64px" Height="40px" Class="ml-2" />
+                <MudSkeleton Width="105px" Height="40px" Class="ml-3" />
+            </MudCardActions>
+        </MudCard>
     }
     else
     {
@@ -100,6 +112,7 @@
         catch(Exception ex)
         {
             _logger.LogError("Error getting post or user", ex);
+            Snackbar.Add("Error getting post. Try again later", Severity.Error);
         }
 
     }
@@ -128,16 +141,18 @@
                 var res = await _postService.DeletePostAsync(postId);
                 if (res)
                 {
-                    _logger.LogInformation("Post successfully deleted");
+                    Snackbar.Add("Post was deleted successfully", Severity.Success);
                     _nav.NavigateTo("/");
                 }
                 {
-                    _logger.LogInformation("Post wasn't deleted due to some error");
+                    Snackbar.Add("Error deleting the post. Please try again.", Severity.Error);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting post : {ex}");
+                Snackbar.Add("Error deleting the post. Please try again.", Severity.Error);
+
             }
         }
     }

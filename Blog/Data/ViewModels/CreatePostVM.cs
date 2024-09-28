@@ -16,7 +16,7 @@ public class CreatePostVM
     public List<string>? ImageUrls { get; set; } = new();
 
     [Required(ErrorMessage = "Category is required")]
-    public int CategoryId { get; set; }
+    public int CategoryId { get; set; } // Make CategoryId nullable
     public string AuthorId { get; set; }
 }
 

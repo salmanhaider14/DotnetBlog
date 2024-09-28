@@ -3,6 +3,7 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 @inject ILogger<Authors> _logger
+@inject ISnackbar Snackbar
 
 <PageTitle>Authors</PageTitle>
 
@@ -16,7 +17,7 @@
 
 @if (authors is null)
 {
-    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+    <LoadingPosts />
 }
 else if (authors.Count == 0)
 {
@@ -67,6 +68,7 @@ else
         catch (Exception ex)
         {
             _logger.LogError($"Error fetching authors: {ex}");
+            Snackbar.Add("Error fetching authors", Severity.Error);
         }
     }
 

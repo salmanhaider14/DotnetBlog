@@ -1,0 +1,33 @@
+﻿<div class="p-4">
+    <MudSkeleton Height="250px" /> <!-- Cover Image Skeleton -->
+    <MudSkeleton Width="50%" Height="48px" Class="mt-4" /> <!-- Header Title Skeleton -->
+    <MudSkeleton Width="30%" Height="32px" /> <!-- Subtitle Skeleton -->
+
+    <div class="flex flex-wrap justify-between items-center mb-4 mt-4">
+        <MudSkeleton Width="100%" Height="40px" /> <!-- Search Bar Skeleton -->
+        <div class="flex items-center gap-2">
+            <MudSkeleton Width="150px" Height="40px" /> <!-- Categories Filter Skeleton -->
+            <MudSkeleton Width="150px" Height="40px" /> <!-- Authors Filter Skeleton -->
+        </div>
+    </div>
+
+    <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
+        @for (int i = 0; i < 4; i++) // Assuming 4 posts as placeholders
+        {
+            <MudCard>
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" /> <!-- Post Image Skeleton -->
+                <MudCardContent>
+                    <MudSkeleton Width="70%" Height="32px" /> <!-- Post Title Skeleton -->
+                    <MudSkeleton Width="90%" /> <!-- Post Description Skeleton -->
+                    <MudSkeleton Width="100%" /> <!-- Post Excerpt Skeleton -->
+                </MudCardContent>
+                <MudCardActions>
+                    <MudSkeleton Width="80px" Height="36px" Class="ml-2" /> <!-- Action Button Skeleton -->
+                    <MudSkeleton Width="80px" Height="36px" Class="ml-3" /> <!-- Another Button Skeleton -->
+                </MudCardActions>
+            </MudCard>
+        }
+    </div>
+
+    <MudSkeleton Width="100px" Height="36px" Class="mx-auto mt-4" /> <!-- Pagination Skeleton -->
+</div>

@@ -4,7 +4,7 @@
 @rendermode InteractiveServer
 @using Size = MudBlazor.Size
 @inject ILogger<AuthorDetails> _logger
-
+@inject ISnackbar Snackbar
 <PageTitle>@pageTite</PageTitle>
 
 @if(user is null)
@@ -140,9 +140,7 @@ else
         <p>No posts found for this author</p>
     }
     else
-    {
-        
-      
+    {     
         <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
 
            <PostsDisplay Posts="posts" IsAuthor=true />
@@ -180,6 +178,7 @@ else
         catch (Exception ex)
         {
             _logger.LogError($"Error getting author posts or author : {ex}");
+            Snackbar.Add("Error getting author. Try again later", Severity.Error);
         }
     }
     private async Task LoadPostsAsync()
@@ -193,6 +192,7 @@ else
         catch (Exception ex)
         {
             _logger.LogError("Error Loading Posts For Author", ex);
+            Snackbar.Add("Error loading posts. Try again later", Severity.Error);
         }
     }
     private async Task OnSearchAsync()

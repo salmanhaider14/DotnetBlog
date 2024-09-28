@@ -3,56 +3,67 @@
 @rendermode InteractiveServer
 @inject UserManager<ApplicationUser> _userManager
 @inject ILogger<AllPosts> _logger
+@inject ISnackbar Snackbar
 
 <PageTitle>All Posts</PageTitle>
 
-<section class="relative h-[70vh] bg-cover bg-center rounded-2xl" style="background-image: url('https://plus.unsplash.com/premium_photo-1661596686441-611034b8077e?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');">
-    <div class="rounded-2xl bg-black absolute inset-0 bg-opacity-50 flex items-center justify-center">
-        <div class="text-center text-white px-4">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">All The Blogs</h1>
-            <p class="text-xl md:text-2xl">Your journey starts here</p>
+@if (posts is null)
+{
+    <LoadingPosts />
+}
+else{
+    <section class="relative h-[70vh] bg-cover bg-center rounded-2xl" style="background-image: url('https://plus.unsplash.com/premium_photo-1661596686441-611034b8077e?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');">
+        <div class="rounded-2xl bg-black absolute inset-0 bg-opacity-50 flex items-center justify-center">
+            <div class="text-center text-white px-4">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">All The Blogs</h1>
+                <p class="text-xl md:text-2xl">Your journey starts here</p>
+            </div>
+        </div>
+    </section>
+
+    <h1 class="font-bold text-2xl my-6"> Posts</h1>
+    <div class="flex flex-wrap justify-between items-center mb-4">
+
+        <div class="relative w-full md:w-[40%]">
+            <!-- Search bar -->
+            <MudTextField Adornment="Adornment.End" @bind-Value="searchKeyword" @bind-Value:after="OnSearchAsync"
+                          InputType="InputType.Search" Placeholder="Search for posts..."
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          />
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Categories filter -->
+            <MudAutocomplete T="string" Label="Categories"
+                             SearchFunc="SearchCategories" ResetValueOnEmptyText="true" Clearable="true" ValueChanged="OnCategoryChanged" />
+
+            <!-- Authors filter -->
+            <MudAutocomplete T="string" Label="Authors"
+                             SearchFunc="SearchAuthors" ResetValueOnEmptyText="true" Clearable="true" ValueChanged="OnAuthorChanged" />
         </div>
     </div>
-</section>
 
-<h1 class="font-bold text-2xl my-6"> Posts</h1>
-<div class="flex flex-wrap justify-between items-center mb-4">
+    @if (posts.Count == 0)
+    {
+        <p>No posts to display</p>
+    }
+    else
+    {
+        <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
 
-    <div class="relative w-full md:w-[40%]">
-    <!-- Search bar -->
-    <MudTextField Adornment="Adornment.End" @bind-Value="searchKeyword" @bind-Value:after="OnSearchAsync"
-                  InputType="InputType.Search" Placeholder="Search for posts..."
-                  AdornmentIcon="@Icons.Material.Filled.Search" />
+            <PostsDisplay Posts="@posts" />
+        </div>
+    }
+    <div class="flex justify-center mt-4">
+        <MudPagination Color="Color.Primary" Count="@totalPages" SelectedChanged="OnPageChanged" />
     </div>
 
-    <div class="flex items-center gap-2"> 
-    <!-- Categories filter -->
-    <MudAutocomplete T="string" Label="Categories" 
-                     SearchFunc="SearchCategories" ResetValueOnEmptyText="true" Clearable="true" ValueChanged="OnCategoryChanged" />
-
-    <!-- Authors filter -->
-    <MudAutocomplete T="string" Label="Authors" 
-                     SearchFunc="SearchAuthors" ResetValueOnEmptyText="true" Clearable="true" ValueChanged="OnAuthorChanged"/>
-    </div>
-</div>
-
-@if(posts.Count == 0)
-{
-    <p>No posts to display</p>
 }
-else
-{
-    <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
 
-        <PostsDisplay Posts="@posts" />
-    </div>
-}
-<div class="flex justify-center mt-4">
-    <MudPagination Color="Color.Primary" Count="@totalPages" SelectedChanged="OnPageChanged"/>
-</div>
+
 
 @code {
-    private List<Post> posts = new();
+    private List<Post> posts;
     private int currentPage = 1;
     private int pageSize = 10; // Number of posts per page
     private int totalPages = 1; // Total number of pages
@@ -66,6 +77,7 @@ else
     }
     private async Task LoadPostsAsync()
     {
+        
         try
         {
             var result = await postService.SearchAndPaginatePostsAsync(searchKeyword, selectedCategory, selectedAuthor, currentPage, pageSize);
@@ -75,10 +87,7 @@ else
         catch(Exception ex)
         {
             _logger.LogError("Error Loading Posts", ex);
-        }
-        finally
-        {
-            StateHasChanged();
+            Snackbar.Add("Error loading posts.Try again later", Severity.Error);
         }
     }
     private async Task OnSearchAsync()
@@ -95,11 +104,13 @@ else
     {
         selectedAuthor = author;
         await LoadPostsAsync();
+        StateHasChanged();
     }
     private async Task OnCategoryChanged(string category)
     {
         selectedCategory = category;
         await LoadPostsAsync();
+        StateHasChanged();
     }
     private async Task<IEnumerable<string>> SearchCategories(string value, CancellationToken token)
     {

@@ -6,6 +6,8 @@
 @attribute [Authorize(Roles = "Author,Admin")]
 @inject AuthenticationStateProvider _authStateProvider
 @inject UserManager<ApplicationUser> _userManager
+@inject ILogger<UpdatePost> _logger
+@inject ISnackbar Snackbar
 
 <MudContainer Class="mt-16">
     <MudText Typo="Typo.h3" Class="mb-8">Update Post</MudText>
@@ -17,7 +19,7 @@
             <div class="mb-4">
 
                 <MudTextField @bind-Value="post.Title" Label="Title" Variant="Variant.Outlined" />
-                <ValidationMessage For="@(() => post.Title)" />
+                <ValidationMessage For="@(() => post.Title)" class="text-red-500 text-sm mt-1" />
             </div>
 
             @if (EditorEnabled)
@@ -81,7 +83,7 @@
                         <MudSelectItem Value="category.Id">@category.Name</MudSelectItem>
                     }
                 </MudSelect>
-                <ValidationMessage For="@(() => post.CategoryId)" />
+                <p class="text-red-500 text-sm mt-1">@categoryError</p>
             </div>
 
             <div class="flex items-center justify-between">
@@ -96,51 +98,94 @@
     public string Id { get; set; }
     private UpdatePostVM post = new UpdatePostVM();
     private List<Category> categories = new List<Category>();
+    private string categoryError = string.Empty;
 
     private ElementReference divEditorElement;
     private bool EditorEnabled = true;
 
     protected override async Task OnInitializedAsync()
     {
-        var res = await _postService.GetAllCategoriesAsync();
-        categories = res.Categories;
-        var postToUpdate = await _postService.GetPostByIdAsync(int.Parse(Id));
+        try
+        {
+            var res = await _postService.GetAllCategoriesAsync();
+            categories = res.Categories;
+            var postToUpdate = await _postService.GetPostByIdAsync(int.Parse(Id));
 
-        if(postToUpdate is not null)
-        {
-            post.Title = postToUpdate.Title;
-            post.Content = postToUpdate.Content;
-            post.CategoryId = postToUpdate.CategoryId;
-            post.ImageUrls = postToUpdate.ImageUrls;
+            if (postToUpdate is not null)
+            {
+                post.Title = postToUpdate.Title;
+                post.Content = postToUpdate.Content;
+                post.CategoryId = postToUpdate.CategoryId;
+                post.ImageUrls = postToUpdate.ImageUrls;
+            }
+            var auth = await _authStateProvider.GetAuthenticationStateAsync();
+            var user = await _userManager.GetUserAsync(auth.User);
+            if (user.Id != postToUpdate.AuthorId)
+            {
+                NavigationManager.NavigateTo("/");
+            }
         }
-        var auth = await _authStateProvider.GetAuthenticationStateAsync();
-        var user = await _userManager.GetUserAsync(auth.User);
-        if(user.Id != postToUpdate.AuthorId)
+        catch(Exception ex)
         {
-            NavigationManager.NavigateTo("/");
+            _logger.LogError($"Error loading update post component: {ex}");
+            Snackbar.Add("Error loading update component. Please try again later.", Severity.Error);
+
         }
+
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Initialize Quill editor
-            await js.InvokeVoidAsync("QuillFunctions.createQuill", divEditorElement);
+            try
+            {
+                // Initialize Quill editor
+                await js.InvokeVoidAsync("QuillFunctions.createQuill", divEditorElement);
 
-            // Add a small delay to ensure Quill is fully initialized before loading content
-            await Task.Delay(1000);
+                // Add a small delay to ensure Quill is fully initialized before loading content
+                await Task.Delay(1000);
 
-            // Load the content into the editor after initialization
-            await js.InvokeVoidAsync("QuillFunctions.loadQuillContent", post.Content);
+                // Load the content into the editor after initialization
+                await js.InvokeVoidAsync("QuillFunctions.loadQuillContent", post.Content);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error creating text editor : {ex}");
+                Snackbar.Add("Error creating the text editor", Severity.Error);
+
+            }
         }
     }
 
 
     private async Task HandleValidSubmit()
     {
-        post.Content = await js.InvokeAsync<string>("QuillFunctions.getQuillContent");
-        var updatePost = await _postService.UpdatePostAsync(post, int.Parse(Id));
- 
-        NavigationManager.NavigateTo("/");
+        try
+        {
+            post.Content = await js.InvokeAsync<string>("QuillFunctions.getQuillContent");
+            if (string.IsNullOrWhiteSpace(post.Content) || post.Content.Length < 50)
+            {
+                // Display custom error message
+                Snackbar.Add("Content must be at least 50 characters long.", Severity.Error);
+                return;
+            }
+            if (post.CategoryId == 0)
+            {
+                categoryError = "Pls select a category";
+                return;
+            }
+            var updatePost = await _postService.UpdatePostAsync(post, int.Parse(Id));
+            Snackbar.Add("Post updated successfully!", Severity.Success);
+
+
+            NavigationManager.NavigateTo("/");
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError("Error updating post: " + ex.Message);
+            Snackbar.Add("Error updating the post. Please try again.", Severity.Error);
+
+        }
+
     }
 }

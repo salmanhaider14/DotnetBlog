@@ -3,6 +3,7 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 @inject ILogger<Categories> _logger
+@inject ISnackbar Snackbar
 
 <PageTitle>Categories</PageTitle>
 
@@ -18,7 +19,7 @@
 
 @if(categories is null)
 {
-    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+    <LoadingPosts />
 }
 else if(categories.Count == 0)
 {
@@ -73,6 +74,7 @@ else
         catch (Exception ex)
         {
             _logger.LogError($"Error fetching categories : {ex}");
+            Snackbar.Add("Error fetching categories. Try again later", Severity.Error);
         }
     }
     private async Task OnSearchAsync()
