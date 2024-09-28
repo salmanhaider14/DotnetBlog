@@ -54,7 +54,7 @@ else
 @code {
     private List<Post> posts = new();
     private int currentPage = 1;
-    private int pageSize = 5; // Number of posts per page
+    private int pageSize = 10; // Number of posts per page
     private int totalPages = 1; // Total number of pages
     private string searchKeyword = string.Empty;
     private string selectedCategory;
@@ -105,8 +105,8 @@ else
     {
         try
         {
-            var categories = await postService.GetAllCategoriesAsync();
-            return categories.Where(c => c.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+            var res = await postService.GetAllCategoriesAsync();
+            return res.Categories.Where(c => c.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
                              .Select(c => c.Name);
         }
         catch(Exception ex)

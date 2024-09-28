@@ -4,6 +4,7 @@
 @using Microsoft.EntityFrameworkCore;
 @using Size = MudBlazor.Size
 @inject ILogger<CategoryPosts> _logger
+@inject UserManager<ApplicationUser> _userManager
 
 <PageTitle>@pageTite</PageTitle>
 
@@ -19,32 +20,55 @@ else
                 <MudAvatar Size="Size.Large" Color="Color.Secondary">U</MudAvatar>
                 <p class="text-lg ">@category.Name</p>
             </div>
-           @*  <div class="text-center px-4">
-
-                <p class="text-[17px]">Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. </p>
-            </div> *@
         </div>
     </section>
-    @if(posts.Count == 0)
+    <h1 class="font-bold text-2xl my-6">Category Posts</h1>
+    <div class="flex flex-wrap justify-between items-center mb-4">
+        <div class="relative w-full md:w-[40%]">
+            <!-- Search bar -->
+            <MudTextField Adornment="Adornment.End" @bind-Value="searchKeyword" @bind-Value:after="OnSearchAsync"
+                          InputType="InputType.Search" Placeholder="Search for posts..."
+                          AdornmentIcon="@Icons.Material.Filled.Search" />
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Authors filter -->
+            <MudAutocomplete T="string" Label="Authors"
+                             SearchFunc="SearchAuthors" ResetValueOnEmptyText="true" Clearable="true" ValueChanged="OnAuthorChanged" />
+        </div>
+    </div>
+
+    @if (filteredPosts.Count == 0)
     {
-       <p>No posts found for this category</p>
+        <p>No posts found for this category</p>
     }
     else
     {
-        <h1 class="font-bold text-2xl my-6">Category Posts</h1>
         <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
+            <PostsDisplay Posts="pagedPosts" />
+        </div>
 
-           <PostsDisplay Posts="posts" />
+        <div class="flex justify-center mt-4">
+            <MudPagination Color="Color.Primary" Count="@totalPages" SelectedChanged="OnPageChanged" />
         </div>
     }
-
 }
+
 @code {
     [Parameter]
     public string Id { get; set; }
     private Category? category;
-    private List<Post> posts = new();
+    private List<Post> posts = new(); // Store all posts initially
+    private List<Post> filteredPosts = new(); // Store filtered posts
+    private List<Post> pagedPosts = new(); // Store posts for the current page
+
     private string pageTite = "Category";
+    private int currentPage = 1;
+    private int pageSize = 10; // Number of posts per page
+    private int totalPages = 1; // Total number of pages
+
+    private string searchKeyword = string.Empty;
+    private string selectedAuthor;
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,13 +78,71 @@ else
             if (category is not null)
             {
                 posts = category.Posts.ToList();
+                filteredPosts = posts; // Initialize filtered posts
+                UpdatePagedPosts();
                 pageTite = category.Name;
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError($"Error getting categories or category posts : {ex}");
         }
+    }
 
+    // Update the paged posts based on the current page and page size
+    private void UpdatePagedPosts()
+    {
+        totalPages = (int)Math.Ceiling((double)filteredPosts.Count / pageSize);
+        pagedPosts = filteredPosts
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+    }
+
+    private async Task OnSearchAsync()
+    {
+        currentPage = 1; // Reset to first page when searching
+        FilterPosts();
+        UpdatePagedPosts();
+    }
+
+    private async Task OnAuthorChanged(string author)
+    {
+        selectedAuthor = author;
+        currentPage = 1; // Reset to first page when author changes
+        FilterPosts();
+        UpdatePagedPosts();
+        StateHasChanged();
+    }
+
+    private void FilterPosts()
+    {
+        // Filter posts based on the search keyword and selected author
+        filteredPosts = posts
+            .Where(p => (string.IsNullOrWhiteSpace(searchKeyword) || p.Title.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase)) &&
+                        (string.IsNullOrWhiteSpace(selectedAuthor) || p.Author.FullName == selectedAuthor))
+            .ToList();
+    }
+
+    private void OnPageChanged(int page)
+    {
+        currentPage = page;
+        UpdatePagedPosts();
+        StateHasChanged();
+    }
+
+    private async Task<IEnumerable<string?>> SearchAuthors(string value, CancellationToken token)
+    {
+        try
+        {
+            var authors = await _userManager.GetUsersInRoleAsync("Author");
+            return authors.Where(a => a.FullName.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+                          .Select(a => a.FullName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error getting authors", ex);
+            return Enumerable.Empty<string>();
+        }
     }
 }

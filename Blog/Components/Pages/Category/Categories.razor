@@ -26,6 +26,12 @@ else if(categories.Count == 0)
 }
 else
 {
+    <div class="relative w-full md:w-[40%]">
+        <!-- Search bar -->
+        <MudTextField Adornment="Adornment.End" @bind-Value="searchKeyword" @bind-Value:after="OnSearchAsync"
+                      InputType="InputType.Search" Placeholder="Search for categories..."
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+    </div>
     <div class="grid gap-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 my-10 justify-center">
 
         @foreach (var category in categories)
@@ -39,22 +45,47 @@ else
 
         }
     </div>
+    <div class="flex justify-center mt-4">
+        <MudPagination Color="Color.Primary" Count="@totalPages" SelectedChanged="OnPageChanged" />
+    </div>
 }
 
 @code {
     private List<Category> categories;
+    private int currentPage = 1;
+    private int pageSize = 10; // Number of posts per page
+    private int totalPages = 1; // Total number of pages
+    private string searchKeyword = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        try {
 
-            categories = await _postService.GetAllCategoriesAsync();
+        await LoadCategories();
+    }
+    private async Task LoadCategories()
+    {
+        try
+        {
+            var res = await _postService.GetAllCategoriesAsync(searchKeyword,currentPage,pageSize);
+            categories = res.Categories;
+            totalPages = res.TotalPages;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError($"Error fetching categories : {ex}");
         }
-
+    }
+    private async Task OnSearchAsync()
+    {
+        currentPage = 1; // Reset to first page when searching
+        await LoadCategories();
+        StateHasChanged();
+    }
+    private async Task OnPageChanged(int page)
+    {
+        currentPage = page;
+        await LoadCategories();
+        StateHasChanged();
     }
     private void NavigateToCategory(int Id)
     {

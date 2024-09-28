@@ -36,41 +36,41 @@ a {
     color: darkblue;
 }
 /* General styling for ordered and unordered lists */
-ol, ul {
-    margin-left: 7px; /* Indent lists */
-    padding-left: 7px; /* Padding for alignment */
-    line-height: 1.6; /* Adjust line height for better readability */
-}
+/*ol, ul {
+    margin-left: 7px;*/ /* Indent lists */
+    /*padding-left: 7px;*/ /* Padding for alignment */
+    /*line-height: 1.6;*/ /* Adjust line height for better readability */
+/*}*/
 
 /* Styling for ordered list */
-ol {
-    list-style-type: decimal; /* Default decimal style for ordered lists */
-    color: #333; /* Dark color for text */
-}
+/*ol {
+    list-style-type: decimal; 
+    color: #333; 
+}*/
 
 /* Styling for bullet (unordered) list */
-ul {
-    list-style-type: disc; /* Default bullet style */
-    color: #333; /* Dark color for text */
-}
+/*ul {
+    list-style-type: disc;*/ /* Default bullet style */
+    /*color: #333;*/ /* Dark color for text */
+/*}*/
 
 /* Styling for list items */
-li {
-    font-family: Arial, sans-serif; /* Set a standard font */
-    font-size: 16px; /* Adjust the font size */
-    color: #444; /* Dark color for list items */
-    margin-bottom: 2px; /* Space between list items */
-}
+/*li {
+    font-family: Arial, sans-serif;*/ /* Set a standard font */
+    /*font-size: 16px;*/ /* Adjust the font size */
+    /*color: #444;*/ /* Dark color for list items */
+    /*margin-bottom: 2px;*/ /* Space between list items */
+/*}*/
 
     /* Specific styles for Quill-generated lists */
     li[data-list="ordered"] {
-        list-style-type: decimal; /* Ensure ordered lists use decimal numbers */
-        margin-left: 5px; /* Additional indentation for clarity */
+        list-style-type: decimal; 
+        margin-left: 5px;  
     }
 
-    li[data-list="bullet"] {
-        list-style-type: disc; /* Ensure bullets use disc markers */
-        margin-left: 5px; /* Additional indentation for clarity */
+    .ql-editor [data-list="bullet"] {
+        list-style-type: disc;  
+        margin-left: 5px; 
     }
 
 /* Style for right-aligned content */

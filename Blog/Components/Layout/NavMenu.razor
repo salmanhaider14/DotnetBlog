@@ -26,7 +26,12 @@
     <div class="hidden md:flex items-center space-x-4">
 
         <AuthorizeView Roles="Author,Admin">
-            <MudButton Variant="Variant.Filled" OnClick="NavigateToCreatePost">Make Post</MudButton>
+            <Authorized>
+                <MudButton Variant="Variant.Filled" OnClick="NavigateToCreatePost">Make Post</MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Variant="Variant.Filled" OnClick="NavigateToBecomeAuthor">Become Author</MudButton>
+            </NotAuthorized>
         </AuthorizeView>
         <AuthorizeView>
             <Authorized>
@@ -62,8 +67,8 @@
                         </MudMenu>
                     </Authorized>
                     <NotAuthorized>
-                        <MudButton Href="Account/Register" Variant="Variant.Text" Color="Color.Inherit">Register</MudButton>
-                        <MudButton Href="Account/Login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+                        <MudNavLink Href="Account/Register" Match="NavLinkMatch.Prefix">Register</MudNavLink>
+                        <MudNavLink Href="Account/Login" Match="NavLinkMatch.Prefix">Login</MudNavLink>>
                     </NotAuthorized>
                 </AuthorizeView>
         </div>
@@ -108,5 +113,9 @@
     private void NavigateToCreatePost()
     {
         NavigationManager.NavigateTo("/create-post");
+    }
+    private void NavigateToBecomeAuthor()
+    {
+        NavigationManager.NavigateTo("/become-author");
     }
 }

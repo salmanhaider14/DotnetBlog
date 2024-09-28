@@ -1,0 +1,59 @@
+﻿@page "/become-author"
+@rendermode InteractiveServer
+@inject UserManager<ApplicationUser> _userManager
+@inject AuthenticationStateProvider _authStateProvider
+@inject ISnackbar Snackbar
+@inject NavigationManager _navigation
+@attribute [Authorize]
+
+<PageTitle>Become Author</PageTitle>
+
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class=" rounded-lg p-6 mx-auto mt-10">
+    <MudCard Class="text-center">
+        <MudCardHeader>
+            <MudText Typo="Typo.h4" Class="font-bold">Become an Author</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <p class="text-gray-700 text-lg mb-4">
+                To become an author, please read and agree to our terms of service. Once you agree, your account will be upgraded from "Reader" to "Author".
+            </p>
+            <MudText Typo="Typo.h5" Class="text-left font-semibold my-2">Terms of Service</MudText>
+            <MudPaper Class="p-4 text-left bg-gray-100">
+                <ul class="list-disc list-inside text-gray-600">
+                    <li>Authors must provide original content.</li>
+                    <li>No plagiarism or content duplication is allowed.</li>
+                    <li>Authors are responsible for the accuracy of the information they provide.</li>
+                    <li>Content must adhere to our community guidelines.</li>
+                    <li>Authors will be subject to moderation and review.</li>
+                </ul>
+            </MudPaper>
+
+            <MudCheckBox T="bool" @bind-Value="_acceptedTerms" Color="Color.Primary" Class="mt-4">
+                I agree to the terms and conditions
+            </MudCheckBox>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_acceptedTerms)" Class="mt-4" OnClick="MakeAuthor">
+                Become Author
+            </MudButton>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private bool _acceptedTerms = false;
+    private async Task MakeAuthor()
+    {
+        var auth = await _authStateProvider.GetAuthenticationStateAsync();
+        var user = await _userManager.GetUserAsync(auth.User);
+        if(user is not null)
+        {
+            await _userManager.RemoveFromRoleAsync(user, "Reader");
+            await _userManager.AddToRoleAsync(user, "Author");
+            Snackbar.Add("You've successfully become an author. Pls Login to make posts", Severity.Success);
+            _navigation.NavigateTo("/Account/Logout", forceLoad:true);
+        }
+
+    }
+
+}

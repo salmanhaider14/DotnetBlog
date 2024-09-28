@@ -113,7 +113,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        categories = await _postService.GetAllCategoriesAsync();
+        var res = await _postService.GetAllCategoriesAsync();
+        categories = res.Categories;
     }
 
     private async Task HandleValidSubmit()

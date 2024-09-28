@@ -11,53 +11,107 @@
         <div class="flex items-center gap-2">
             <p class="text-2xl font-bold ">Authors</p>
         </div>
-
     </div>
 </section>
 
-@if(authors is null)
+@if (authors is null)
 {
     <MudProgressCircular Color="Color.Default" Indeterminate="true" />
 }
-else if(authors.Count == 0)
+else if (authors.Count == 0)
 {
     <p>No authors to display</p>
 }
 else
 {
+    <div class="relative w-full md:w-[40%]">
+        <!-- Search bar -->
+        <MudTextField Adornment="Adornment.End" @bind-Value="searchKeyword" @bind-Value:after="OnSearchAsync"
+                      InputType="InputType.Search" Placeholder="Search for authors..."
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+    </div>
     <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
-
-        @foreach (var author in authors)
+        @foreach (var author in paginatedAuthors)
         {
-
-            <MudCard Class="p-4 flex flex-col gap-3 w-full md:w-[270px] h-[200px] max-h-[500px]" @onclick ="() => NavigateToAuthor(author.Id)">
-
+            <MudCard Class="p-4 flex flex-col gap-3 w-full md:w-[270px] h-[200px] max-h-[500px]" @onclick="() => NavigateToAuthor(author.Id)">
                 <MudCardMedia Image="https://images.unsplash.com/photo-1517404215738-15263e9f9178?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" Height="150" />
-
                 <h1 class="text-lg font-semibold">@author.FullName</h1>
-
-                </MudCard>
-
+            </MudCard>
         }
+    </div>
+    <div class="flex justify-center mt-4">
+        <MudPagination Color="Color.Primary" Count="@totalPages" SelectedChanged="OnPageChanged" />
     </div>
 }
 
-
 @code {
     private IList<ApplicationUser> authors;
+    private List<ApplicationUser> filteredAuthors = new(); // Holds the filtered list based on search
+    private List<ApplicationUser> paginatedAuthors = new();
+    private int currentPage = 1;
+    private int pageSize = 2; // Number of authors per page
+    private int totalPages = 1; // Total number of pages
+    private string searchKeyword = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            // Fetch all authors
             authors = await _userManager.GetUsersInRoleAsync("Author");
+            // Set the initial filtered list to all authors
+            filteredAuthors = authors.ToList();
+            totalPages = (int)Math.Ceiling(filteredAuthors.Count / (double)pageSize);
+            PaginateAuthors();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            _logger.LogError($"Error fetching authors : ex");
+            _logger.LogError($"Error fetching authors: {ex}");
+        }
+    }
+
+    // Paginate the filtered list
+    private void PaginateAuthors()
+    {
+        paginatedAuthors = filteredAuthors.Skip((currentPage - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        StateHasChanged();
+    }
+
+    // Handle pagination changes
+    private async Task OnPageChanged(int page)
+    {
+        currentPage = page;
+        PaginateAuthors();
+    }
+
+    // Handle search logic
+    private async Task OnSearchAsync()
+    {
+        currentPage = 1; // Reset to first page when searching
+
+        if (string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            // If search is empty, reset the filtered list to all authors
+            filteredAuthors = authors.ToList();
+        }
+        else
+        {
+            // Filter authors based on the search keyword
+            filteredAuthors = authors.Where(author =>
+                author.FullName.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
 
+        // Recalculate total pages based on the filtered list
+        totalPages = (int)Math.Ceiling(filteredAuthors.Count / (double)pageSize);
+
+        // Paginate the filtered authors
+        PaginateAuthors();
     }
+
+    // Navigate to the selected author's page
     private void NavigateToAuthor(string Id)
     {
         NavigationManager.NavigateTo($"/author/{Id}");

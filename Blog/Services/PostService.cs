@@ -51,10 +51,34 @@ public class PostService(ApplicationDbContext _context)
             .Take(9)
             .ToListAsync();
     }
-    public async Task<List<Category>> GetAllCategoriesAsync()
+    public async Task<(List<Category> Categories, int TotalPages)> GetAllCategoriesAsync(string keyword = null, int? pageNumber = null, int? pageSize = null)
     {
-        return await _context.Categories
-            .ToListAsync();
+        var query = _context.Categories.AsQueryable();
+
+        // Apply search filter if keyword is provided
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(c => c.Name.Contains(keyword));
+        }
+
+        // Count total categories matching the query
+        var totalCategories = await query.CountAsync();
+
+        // Set a default pageSize if none is provided
+        var pageSizeValue = pageSize ?? totalCategories; // If pageSize is null, show all categories on one page
+        var totalPages = (int)Math.Ceiling(totalCategories / (double)pageSizeValue);
+
+        // Apply pagination only if both pageNumber and pageSize are provided
+        if (pageNumber.HasValue && pageSize.HasValue)
+        {
+            query = query
+                .Skip((pageNumber.Value - 1) * pageSizeValue)
+                .Take(pageSizeValue);
+        }
+
+        // Execute the query and return the results
+        var categories = await query.ToListAsync();
+        return (categories, totalPages);
     }
     public async Task<Category?> GetCategoryByIdAsync(int Id)
     {
@@ -64,7 +88,6 @@ public class PostService(ApplicationDbContext _context)
             .FirstOrDefault(c => c.Id == Id);
 
     }
-
     /// <summary>
     /// Retrieves a post by its Id.
     /// </summary>
@@ -91,14 +114,38 @@ public class PostService(ApplicationDbContext _context)
     /// <summary>
     /// Retrieves posts by AuthorId.
     /// </summary>
-    public async Task<List<Post>> GetPostsByAuthorAsync(string authorId)
+    public async Task<(List<Post> Posts, int TotalPages)> GetPostsByAuthorAsync(string authorId, string keyword, int pageNumber, int pageSize, string category = null)
     {
-        return await _context.Posts
+
+        var query = _context.Posts
             .Where(p => p.AuthorId == authorId)
-            .OrderByDescending(p => p.CreatedAt)
             .Include(p => p.Category)
             .Include(p => p.Author)
+            .AsQueryable();
+
+        // Apply search if a keyword is provided
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(p => p.Title.Contains(keyword) || p.Content.Contains(keyword));
+        }
+        // Apply category filter if selected
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(p => p.Category.Name == category);
+        }
+
+        // Calculate total number of posts
+        var totalPosts = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalPosts / (double)pageSize);
+
+        // Apply pagination
+        var posts = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (posts, totalPages);
     }
 
     /// <summary>
