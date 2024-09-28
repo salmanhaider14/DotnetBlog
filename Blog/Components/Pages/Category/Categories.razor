@@ -2,6 +2,8 @@
 @inject PostService _postService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
+@inject ILogger<Categories> _logger
+
 <PageTitle>Categories</PageTitle>
 
 
@@ -14,7 +16,15 @@
         </div>
     </section>
 
-@if(categories is not null)
+@if(categories is null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else if(categories.Count == 0)
+{
+    <p>No categories to display</p>
+}
+else
 {
     <div class="grid gap-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 my-10 justify-center">
 
@@ -36,7 +46,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        categories = await _postService.GetAllCategoriesAsync();
+        try {
+
+            categories = await _postService.GetAllCategoriesAsync();
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError($"Error fetching categories : {ex}");
+        }
+
     }
     private void NavigateToCategory(int Id)
     {

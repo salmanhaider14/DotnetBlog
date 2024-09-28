@@ -2,6 +2,7 @@
 @inject UserManager<ApplicationUser> _userManager
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
+@inject ILogger<Authors> _logger
 
 <PageTitle>Authors</PageTitle>
 
@@ -13,7 +14,16 @@
 
     </div>
 </section>
-@if (authors is not null)
+
+@if(authors is null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else if(authors.Count == 0)
+{
+    <p>No authors to display</p>
+}
+else
 {
     <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
 
@@ -38,7 +48,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        authors = await _userManager.GetUsersInRoleAsync("Author");
+        try
+        {
+            authors = await _userManager.GetUsersInRoleAsync("Author");
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError($"Error fetching authors : ex");
+        }
+
     }
     private void NavigateToAuthor(string Id)
     {

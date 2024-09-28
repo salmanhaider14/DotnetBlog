@@ -16,9 +16,10 @@
 </section>
 
 <h1 class="font-bold text-2xl my-6">Latest Posts</h1>
-@if(posts is null)
+
+@if(posts.Count == 0)
 {
-    <h1>Loading....</h1>
+    <p>No posts to display</p>
 }
 else
 {
@@ -32,7 +33,7 @@ else
 </div>
 
 @code {
-    private List<Post> posts;
+    private List<Post> posts = new();
 
     protected override async Task OnInitializedAsync()
     {

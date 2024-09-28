@@ -1,8 +1,12 @@
 ﻿@inject CommentsService _commentService
 @inject ILogger<CommentDisplay> _logger
 
-<div class="flex justify-between items-center">
-    <span class="font-bold">@Comment.Author.FullName</span>
+<div class="flex justify-between items-center my-2">
+    <div class="flex items-center gap-2">
+        <MudAvatar Size="Size.Small" Color="Color.Secondary">A</MudAvatar>
+        <span class="font-bold">@Comment.Author.FullName</span>
+    </div>
+    
     <span class="text-sm text-gray-500">@Comment.CreatedAt.ToLongDateString()</span>
 </div>
 
@@ -41,14 +45,14 @@ else
 
 @if (Comment.ChildComments.Any())
 {
-    <ul class="ml-6">
+    <div class="ml-6">
         @foreach (var childComment in Comment.ChildComments)
         {
-            <li class="mb-2">
+            <div class="mb-2">
                 <CommentDisplay Comment="childComment" UserId="@UserId" PostId="@PostId" OnCommentUpdated="OnCommentUpdated" />
-            </li>
+            </div>
         }
-    </ul>
+    </div>
 }
 
 @code {

@@ -6,6 +6,7 @@
 @inject CommentsService _commentService
 @inject NavigationManager _nav
 @inject ILogger<PostDetails> _logger
+@inject IDialogService DialogService
 
 
 <PageTitle>@pageTitle</PageTitle>
@@ -43,7 +44,7 @@
                     {
                         <div class="flex items-center gap-1">
                             <MudIconButton Icon="@Icons.Material.Filled.Edit" aria-label="edit" OnClick="() => HandleEdit(post.Id)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="delete" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="delete" OnClick="()=> HandleDelete(post.Id)" />
                         </div>
                     }
                     
@@ -53,7 +54,7 @@
 
             <Carousel ImageUrls="@post.ImageUrls" />
 
-            <div className="ql-container ql-snow">
+            <div className="ql-container ql-snow ql-display-content">
             <div class="ql-editor"> 
                 @((MarkupString)post.Content)
             </div>
@@ -105,6 +106,40 @@
     private void HandleEdit(int postId)
     {
         _nav.NavigateTo($"/update-post/{postId}");
+    }
+    private async Task HandleDelete(int postId)
+    {
+        var parameters = new DialogParameters<PostDeleteDialog>
+        {
+            { x => x.ContentText, "Do you really want to delete this post? This process cannot be undone." },
+            { x => x.ButtonText, "Delete" },
+            { x => x.Color, Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, BackdropClick= false };
+
+        var dialog = await DialogService.ShowAsync<PostDeleteDialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            try
+            {
+                var res = await _postService.DeletePostAsync(postId);
+                if (res)
+                {
+                    _logger.LogInformation("Post successfully deleted");
+                    _nav.NavigateTo("/");
+                }
+                {
+                    _logger.LogInformation("Post wasn't deleted due to some error");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error deleting post : {ex}");
+            }
+        }
     }
     private void HandleAuthor(string Id)
     {

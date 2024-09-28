@@ -16,9 +16,9 @@
         <ul>
             @foreach (var comment in comments)
             {
-                <li class="mb-4">
+                <div class="mb-4">
                     <CommentDisplay Comment="comment" UserId="@UserId" PostId="@PostId" OnCommentUpdated="LoadComments" />
-                </li>
+                </div>
             }
         </ul>
     }
@@ -27,7 +27,7 @@
 <AuthorizeView>
     <div>
         <MudTextField Variant="Variant.Outlined" @bind-Value="newCommentContent" Placeholder="Add a comment..." />
-        <MudButton Variant="Variant.Filled" OnClick="SubmitComment" Disabled="@string.IsNullOrWhiteSpace(newCommentContent)" Color="Color.Primary">
+        <MudButton Class="my-1" Variant="Variant.Filled" OnClick="SubmitComment" Disabled="@string.IsNullOrWhiteSpace(newCommentContent)" Color="Color.Primary">
             Post Comment
         </MudButton>
     </div>

@@ -3,6 +3,7 @@
 @inject UserManager<ApplicationUser> _userManager
 @rendermode InteractiveServer
 @using Size = MudBlazor.Size
+@inject ILogger<AuthorDetails> _logger
 
 <PageTitle>@pageTite</PageTitle>
 
@@ -116,7 +117,11 @@ else
            
         </div>
     </section>
-    @if(posts is not null)
+    @if(posts.Count == 0)
+    {
+        <p>No posts found for this author</p>
+    }
+    else
     {
         <h1 class="font-bold text-2xl my-6">Author Posts</h1>
         <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 my-6 justify-center">
@@ -135,13 +140,19 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-
-        posts = await _postService.GetPostsByAuthorAsync(Id);
-        user = await _userManager.FindByIdAsync(Id);
-
-        if(user is not null)
+        try
         {
-            pageTite = user.FullName;
+            posts = await _postService.GetPostsByAuthorAsync(Id);
+            user = await _userManager.FindByIdAsync(Id);
+
+            if (user is not null)
+            {
+                pageTite = user.FullName;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error getting author posts or author : {ex}");
         }
 
     }

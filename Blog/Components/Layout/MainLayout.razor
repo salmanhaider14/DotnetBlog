@@ -6,7 +6,7 @@
    
     <MudThemeProvider />
     <MudPopoverProvider @rendermode="InteractiveServer" />
-    <MudDialogProvider />
+    <MudDialogProvider @rendermode ="InteractiveServer"/>
     <MudSnackbarProvider @rendermode="InteractiveServer" />
     <NavMenu />
 <div class="p-4">
@@ -23,3 +23,11 @@
 </div>
 <Footer />
 </div>
+
+@code {
+    private ErrorBoundary? errorBoundary;
+    protected override void OnParametersSet()
+    {
+        errorBoundary?.Recover();
+    }
+}

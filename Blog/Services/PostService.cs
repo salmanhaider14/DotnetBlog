@@ -175,16 +175,73 @@ public class PostService(ApplicationDbContext _context)
     /// </summary>
     public async Task<bool> DeletePostAsync(int postId)
     {
-        var post = await _context.Posts.FindAsync(postId);
+        using var transaction = await _context.Database.BeginTransactionAsync();
 
-        if (post == null)
-            return false;
+        try
+        {
+            var post = await _context.Posts
+                .Include(p => p.Comments)
+                .FirstOrDefaultAsync(p => p.Id == postId);
 
-        _context.Posts.Remove(post);
-        await _context.SaveChangesAsync();
+            if (post == null)
+                return false;
 
-        return true;
+            // Gather and delete all comments recursively
+            var commentsToDelete = post.Comments.ToList();
+
+            foreach (var comment in commentsToDelete)
+            {
+                await DeleteCommentAndChildrenAsync(comment.Id);
+            }
+
+            // Delete the post itself
+            _context.Posts.Remove(post);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            throw new Exception(ex.Message);
+        }
     }
+
+
+
+    public async Task DeleteCommentAndChildrenAsync(int commentId)
+    {
+        // Initialize a list to gather all comments to be deleted
+        var commentsToDelete = new List<Comment>();
+
+        // Recursively gather all comments and child comments
+        await GatherCommentsToDeleteAsync(commentId, commentsToDelete);
+
+        // Remove all comments in one batch
+        _context.Comments.RemoveRange(commentsToDelete);
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task GatherCommentsToDeleteAsync(int commentId, List<Comment> commentsToDelete)
+    {
+        var comment = await _context.Comments
+            .Include(c => c.ChildComments)
+            .FirstOrDefaultAsync(c => c.Id == commentId);
+
+        if (comment == null) return;
+
+        // Add the current comment to the list
+        commentsToDelete.Add(comment);
+
+        // Recursively gather all child comments
+        foreach (var childComment in comment.ChildComments)
+        {
+            await GatherCommentsToDeleteAsync(childComment.Id, commentsToDelete);
+        }
+    }
+
 
     #endregion
 
