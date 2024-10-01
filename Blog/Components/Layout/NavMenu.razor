@@ -12,7 +12,7 @@
     <!-- Left Side: Site title and nav links -->
     <div class="flex items-center space-x-6">
    
-            <a class="text-lg md:text-xl font-bold ml-3" href="/">My Blog</a>
+            <a class="text-lg md:text-xl font-bold ml-3" href="/">Thoughts&Threads</a>
                 
     </div>
     <!-- Links Group (Hidden on small screens) -->
@@ -59,6 +59,7 @@
             <MudNavLink Href="authors" Match="NavLinkMatch.Prefix">Authors</MudNavLink>
             <MudNavLink Href="categories" Match="NavLinkMatch.Prefix" >Categories</MudNavLink>
 
+               
                 <AuthorizeView>
                     <Authorized>
                         <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Direction="Direction.Bottom" OffsetY="true">
@@ -71,6 +72,15 @@
                         <MudNavLink Href="Account/Login" Match="NavLinkMatch.Prefix">Login</MudNavLink>>
                     </NotAuthorized>
                 </AuthorizeView>
+                <AuthorizeView Roles="Author,Admin">
+                    <Authorized>
+                        <MudButton Variant="Variant.Filled" OnClick="NavigateToCreatePost">Make Post</MudButton>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudButton Variant="Variant.Filled" OnClick="NavigateToBecomeAuthor">Become Author</MudButton>
+                    </NotAuthorized>
+                </AuthorizeView>
+
         </div>
         </MudNavMenu>
     </MudDrawer>

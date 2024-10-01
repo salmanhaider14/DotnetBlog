@@ -28,7 +28,7 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings_DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -47,8 +47,8 @@ builder.Services.AddHttpClient();
 
 
 builder.Services.AddTransient<ImageUploadService>();
-const string CLOUDINARY_URL = "cloudinary://539697798452188:1rQV_o8Fui_rz8hGhE1AOuMOrpE@di6cw5ehp";
-Cloudinary cloudinary = new Cloudinary(CLOUDINARY_URL);
+string cloudinaryUrl = Environment.GetEnvironmentVariable("CLOUDINARY_URL") ?? throw new InvalidOperationException("Cloudinary URL not found.");
+Cloudinary cloudinary = new Cloudinary(cloudinaryUrl);
 cloudinary.Api.Secure = true;
 builder.Services.AddSingleton(cloudinary);
 
@@ -57,7 +57,11 @@ builder.Services.AddSignalR(options =>
     options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 MB in bytes
 });
 
-builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("AuthMessageSenderOptions"));
+builder.Services.Configure<AuthMessageSenderOptions>(options =>
+{
+    options.SendGridKey = Environment.GetEnvironmentVariable("AuthMessageSenderOptions_SendGridKey");
+    options.SendGridDomain = Environment.GetEnvironmentVariable("AuthMessageSenderOptions_SendGridDomain");
+});
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.ExpireTimeSpan = TimeSpan.FromDays(5);
@@ -69,9 +73,13 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 builder.Services.AddScoped<CommentsService>();
 var app = builder.Build();
 
+
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var databaseContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    databaseContext.Database.Migrate();
 
     string[] roles = { "Admin", "Author", "Reader" };
     foreach (var role in roles)
