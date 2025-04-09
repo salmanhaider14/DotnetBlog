@@ -71,23 +71,51 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 builder.Services.AddScoped<CommentsService>();
 var app = builder.Build();
 
-
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var databaseContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-    databaseContext.Database.Migrate();
-
-    string[] roles = { "Admin", "Author", "Reader" };
-    foreach (var role in roles)
+    try
     {
-        if (!await roleManager.RoleExistsAsync(role))
+        using (var scope = app.Services.CreateScope())
         {
-            await roleManager.CreateAsync(new IdentityRole(role));
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            
+            // Test connection first
+            bool canConnect = false;
+            try
+            {
+                canConnect = dbContext.Database.CanConnect();
+                Console.WriteLine("Database connection test: " + (canConnect ? "Success" : "Failed"));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Database connection error: " + ex.Message);
+            }
+            
+            if (canConnect)
+            {
+                // Apply migrations
+                dbContext.Database.Migrate();
+                
+                // Initialize roles
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                string[] roles = { "Admin", "Author", "Reader" };
+                foreach (var role in roles)
+                {
+                    if (!await roleManager.RoleExistsAsync(role))
+                    {
+                        await roleManager.CreateAsync(new IdentityRole(role));
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Skipping migrations as database connection failed");
+            }
         }
     }
-}
+    catch (Exception ex)
+    {
+        Console.WriteLine("Error during startup: " + ex.ToString());
+    }
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
