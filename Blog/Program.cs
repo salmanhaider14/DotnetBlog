@@ -28,9 +28,9 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings_DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
@@ -47,7 +47,8 @@ builder.Services.AddHttpClient();
 
 
 builder.Services.AddTransient<ImageUploadService>();
-string cloudinaryUrl = Environment.GetEnvironmentVariable("CLOUDINARY_URL") ?? throw new InvalidOperationException("Cloudinary URL not found.");
+string cloudinaryUrl = builder.Configuration["CloudinaryUrl"]
+                       ?? throw new InvalidOperationException("Cloudinary URL not found.");
 Cloudinary cloudinary = new Cloudinary(cloudinaryUrl);
 cloudinary.Api.Secure = true;
 builder.Services.AddSingleton(cloudinary);
@@ -57,11 +58,8 @@ builder.Services.AddSignalR(options =>
     options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 MB in bytes
 });
 
-builder.Services.Configure<AuthMessageSenderOptions>(options =>
-{
-    options.SendGridKey = Environment.GetEnvironmentVariable("AuthMessageSenderOptions_SendGridKey");
-    options.SendGridDomain = Environment.GetEnvironmentVariable("AuthMessageSenderOptions_SendGridDomain");
-});
+builder.Services.Configure<AuthMessageSenderOptions>(
+    builder.Configuration.GetSection("AuthMessageSenderOptions"));
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.ExpireTimeSpan = TimeSpan.FromDays(5);
