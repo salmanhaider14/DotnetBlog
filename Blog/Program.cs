@@ -11,6 +11,16 @@ using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Temporary debug code - remove after troubleshooting
+Console.WriteLine("=== Configuration Values ===");
+Console.WriteLine("DefaultConnection: " + builder.Configuration.GetConnectionString("DefaultConnection"));
+Console.WriteLine("CloudinaryUrl: " + builder.Configuration["CloudinaryUrl"]);
+Console.WriteLine("SendGridKey: " + builder.Configuration["AuthMessageSenderOptions:SendGridKey"]);
+Console.WriteLine("SendGridDomain: " + builder.Configuration["AuthMessageSenderOptions:SendGridDomain"]);
+Console.WriteLine("=== Environment Variables ===");
+Console.WriteLine("DOTNET_ENVIRONMENT: " + Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"));
+Console.WriteLine("ASPNETCORE_ENVIRONMENT: " + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+
 // Add services to the container.
 builder.Services.AddRazorComponents(options =>
     options.DetailedErrors = builder.Environment.IsDevelopment())
