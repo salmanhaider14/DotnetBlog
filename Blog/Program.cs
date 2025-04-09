@@ -10,16 +10,26 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+// Create a logger at the top of Program.cs after builder initialization
+var logger = LoggerFactory.Create(builder => 
+    builder.AddConsole()).CreateLogger("Program");
 
-// Temporary debug code - remove after troubleshooting
-Console.WriteLine("=== Configuration Values ===");
-Console.WriteLine("DefaultConnection: " + builder.Configuration.GetConnectionString("DefaultConnection"));
-Console.WriteLine("CloudinaryUrl: " + builder.Configuration["CloudinaryUrl"]);
-Console.WriteLine("SendGridKey: " + builder.Configuration["AuthMessageSenderOptions:SendGridKey"]);
-Console.WriteLine("SendGridDomain: " + builder.Configuration["AuthMessageSenderOptions:SendGridDomain"]);
-Console.WriteLine("=== Environment Variables ===");
-Console.WriteLine("DOTNET_ENVIRONMENT: " + Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"));
-Console.WriteLine("ASPNETCORE_ENVIRONMENT: " + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+// Structured logging for configuration values
+logger.LogInformation("=== Configuration Values ===");
+logger.LogInformation("DefaultConnection: {ConnectionString}", 
+    builder.Configuration.GetConnectionString("DefaultConnection"));
+logger.LogInformation("CloudinaryUrl: {CloudinaryUrl}", 
+    builder.Configuration["CloudinaryUrl"]);
+logger.LogInformation("SendGridKey: {SendGridKey}", 
+    builder.Configuration["AuthMessageSenderOptions:SendGridKey"]);
+logger.LogInformation("SendGridDomain: {SendGridDomain}", 
+    builder.Configuration["AuthMessageSenderOptions:SendGridDomain"]);
+logger.LogInformation("=== Environment Variables ===");
+logger.LogInformation("DOTNET_ENVIRONMENT: {DotnetEnvironment}", 
+    Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"));
+logger.LogInformation("ASPNETCORE_ENVIRONMENT: {AspNetCoreEnvironment}", 
+    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents(options =>
